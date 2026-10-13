@@ -682,6 +682,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   moveSpeed: 5
   gravity: -20
+  jumpHeight: 1.5
   playerCamera: {fileID: 330585545}
   playerModel: {fileID: 9000000200}
   mouseSensitivity: 0.1

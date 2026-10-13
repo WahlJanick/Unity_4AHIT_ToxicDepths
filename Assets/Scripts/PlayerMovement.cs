@@ -8,7 +8,12 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Bewegung")]
     [SerializeField, Min(0f)] private float moveSpeed = 5f;
+    [Tooltip("Beschleunigung nach unten in Metern pro Sekunde zum Quadrat.")]
     [SerializeField] private float gravity = -20f;
+
+    [Header("Springen")]
+    [Tooltip("Sprunghoehe in Metern. 0 deaktiviert das Springen.")]
+    [SerializeField, Min(0f)] private float jumpHeight = 1.5f;
 
     [Header("Mausblick")]
     [Tooltip("Die Kamera muss ein Kindobjekt des Spielers sein.")]
@@ -22,12 +27,20 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController controller;
     private InputAction moveAction;
     private InputAction lookAction;
+    private InputAction jumpAction;
     private float verticalVelocity;
     private float cameraPitch;
     private float cameraYaw;
     private Renderer[] modelRenderers;
     private ShadowCastingMode[] originalShadowModes;
     private bool controlsPaused;
+
+    private void OnValidate()
+    {
+        // Die Schwerkraft muss nach unten wirken, damit die Sprungberechnung gueltig bleibt.
+        gravity = -Mathf.Max(Mathf.Abs(gravity), 0.01f);
+        jumpHeight = Mathf.Max(0f, jumpHeight);
+    }
 
     private bool InitializePlayer()
     {
@@ -67,6 +80,7 @@ public class PlayerMovement : MonoBehaviour
             .With("Right", "<Keyboard>/d");
 
         lookAction = new InputAction("Look", InputActionType.Value, "<Mouse>/delta");
+        jumpAction = new InputAction("Jump", InputActionType.Button, "<Keyboard>/space");
         return true;
     }
 
@@ -81,6 +95,7 @@ public class PlayerMovement : MonoBehaviour
 
         moveAction.Enable();
         lookAction.Enable();
+        jumpAction.Enable();
         controlsPaused = false;
         SetModelVisible(false);
         SetCursorLocked(Application.isFocused);
@@ -104,8 +119,10 @@ public class PlayerMovement : MonoBehaviour
     {
         moveAction?.Dispose();
         lookAction?.Dispose();
+        jumpAction?.Dispose();
         moveAction = null;
         lookAction = null;
+        jumpAction = null;
     }
 
     private void OnApplicationFocus(bool hasFocus)
@@ -185,14 +202,27 @@ public class PlayerMovement : MonoBehaviour
         Vector3 right = Vector3.Cross(Vector3.up, forward);
         Vector3 velocity = (right * input.x + forward * input.y) * moveSpeed;
 
-        if (controller.isGrounded && verticalVelocity < 0f)
+        bool grounded = controller.isGrounded;
+        if (grounded && verticalVelocity < 0f)
         {
             verticalVelocity = -2f;
         }
 
-        verticalVelocity += gravity * Time.deltaTime;
+        float downwardGravity = -Mathf.Max(Mathf.Abs(gravity), 0.01f);
+        if (controlsActive && grounded && verticalVelocity <= 0f &&
+            jumpHeight > 0f && jumpAction.WasPressedThisFrame())
+        {
+            // v = sqrt(2 * g * h): die Inspector-Einstellung bestimmt die Sprunghoehe.
+            verticalVelocity = Mathf.Sqrt(2f * -downwardGravity * jumpHeight);
+        }
+
+        verticalVelocity += downwardGravity * Time.deltaTime;
         velocity.y = verticalVelocity;
-        controller.Move(velocity * Time.deltaTime);
+        CollisionFlags collisions = controller.Move(velocity * Time.deltaTime);
+        if ((collisions & CollisionFlags.Above) != 0 && verticalVelocity > 0f)
+        {
+            verticalVelocity = 0f;
+        }
     }
 
     private void SetModelVisible(bool visible)
