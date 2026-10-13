@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 [RequireComponent(typeof(CharacterController))]
 [DisallowMultipleComponent]
@@ -12,6 +13,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("Mausblick")]
     [Tooltip("Die Kamera muss ein Kindobjekt des Spielers sein.")]
     [SerializeField] private Camera playerCamera;
+    [Tooltip("Optional: das Pilzling-Modell. Es wirft Schatten, verdeckt aber die Ego-Sicht nicht.")]
+    [SerializeField] private Transform playerModel;
     [Tooltip("Drehung in Grad pro Pixel Mausbewegung.")]
     [SerializeField, Min(0f)] private float mouseSensitivity = 0.1f;
     [SerializeField, Range(0f, 89f)] private float maxLookAngle = 85f;
@@ -21,6 +24,9 @@ public class PlayerMovement : MonoBehaviour
     private InputAction lookAction;
     private float verticalVelocity;
     private float cameraPitch;
+    private float cameraYaw;
+    private Renderer[] modelRenderers;
+    private ShadowCastingMode[] originalShadowModes;
 
     private void Awake()
     {
@@ -40,6 +46,17 @@ public class PlayerMovement : MonoBehaviour
         }
 
         cameraPitch = Mathf.DeltaAngle(0f, playerCamera.transform.localEulerAngles.x);
+        cameraYaw = playerCamera.transform.localEulerAngles.y;
+
+        if (playerModel != null)
+        {
+            modelRenderers = playerModel.GetComponentsInChildren<Renderer>(true);
+            originalShadowModes = new ShadowCastingMode[modelRenderers.Length];
+            for (int i = 0; i < modelRenderers.Length; i++)
+            {
+                originalShadowModes[i] = modelRenderers[i].shadowCastingMode;
+            }
+        }
 
         // Bindings direkt im Code: kein zusaetzliches Input-Actions-Asset erforderlich.
         moveAction = new InputAction("Move", InputActionType.Value);
@@ -56,6 +73,7 @@ public class PlayerMovement : MonoBehaviour
     {
         moveAction?.Enable();
         lookAction?.Enable();
+        SetModelVisible(false);
         SetCursorLocked(true);
     }
 
@@ -64,6 +82,7 @@ public class PlayerMovement : MonoBehaviour
         moveAction?.Disable();
         lookAction?.Disable();
         verticalVelocity = 0f;
+        SetModelVisible(true);
         SetCursorLocked(false);
     }
 
@@ -120,14 +139,18 @@ public class PlayerMovement : MonoBehaviour
         transform.Rotate(Vector3.up, look.x, Space.World);
 
         cameraPitch = Mathf.Clamp(cameraPitch - look.y, -maxLookAngle, maxLookAngle);
-        playerCamera.transform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+        // Die im Inspector eingestellte Blickrichtung des Modells beibehalten.
+        playerCamera.transform.localRotation = Quaternion.Euler(cameraPitch, cameraYaw, 0f);
     }
 
     private void Move(bool controlsActive)
     {
         Vector2 input = controlsActive ? moveAction.ReadValue<Vector2>() : Vector2.zero;
         input = Vector2.ClampMagnitude(input, 1f);
-        Vector3 velocity = (transform.right * input.x + transform.forward * input.y) * moveSpeed;
+        // Auch bei einer um 180 Grad gedrehten Kamera bewegt W nach vorne.
+        Vector3 forward = Vector3.ProjectOnPlane(playerCamera.transform.forward, Vector3.up).normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, forward);
+        Vector3 velocity = (right * input.x + forward * input.y) * moveSpeed;
 
         if (controller.isGrounded && verticalVelocity < 0f)
         {
@@ -137,6 +160,24 @@ public class PlayerMovement : MonoBehaviour
         verticalVelocity += gravity * Time.deltaTime;
         velocity.y = verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    private void SetModelVisible(bool visible)
+    {
+        if (modelRenderers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < modelRenderers.Length; i++)
+        {
+            if (modelRenderers[i] != null)
+            {
+                modelRenderers[i].shadowCastingMode = visible
+                    ? originalShadowModes[i]
+                    : ShadowCastingMode.ShadowsOnly;
+            }
+        }
     }
 
     private static void SetCursorLocked(bool locked)
