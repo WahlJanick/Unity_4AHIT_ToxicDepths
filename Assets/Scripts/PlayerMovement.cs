@@ -27,8 +27,9 @@ public class PlayerMovement : MonoBehaviour
     private float cameraYaw;
     private Renderer[] modelRenderers;
     private ShadowCastingMode[] originalShadowModes;
+    private bool controlsPaused;
 
-    private void Awake()
+    private bool InitializePlayer()
     {
         controller = GetComponent<CharacterController>();
 
@@ -41,8 +42,7 @@ public class PlayerMovement : MonoBehaviour
             !playerCamera.transform.IsChildOf(transform))
         {
             Debug.LogError("PlayerMovement: Weise eine Kamera auf einem Kindobjekt des Spielers zu.", this);
-            enabled = false;
-            return;
+            return false;
         }
 
         cameraPitch = Mathf.DeltaAngle(0f, playerCamera.transform.localEulerAngles.x);
@@ -67,20 +67,29 @@ public class PlayerMovement : MonoBehaviour
             .With("Right", "<Keyboard>/d");
 
         lookAction = new InputAction("Look", InputActionType.Value, "<Mouse>/delta");
+        return true;
     }
 
     private void OnEnable()
     {
-        moveAction?.Enable();
-        lookAction?.Enable();
+        // Auch ohne Scene-/Domain-Reload die Eingaben bei jedem Play-Start neu anlegen.
+        if (!InitializePlayer())
+        {
+            enabled = false;
+            return;
+        }
+
+        moveAction.Enable();
+        lookAction.Enable();
+        controlsPaused = false;
         SetModelVisible(false);
-        SetCursorLocked(true);
+        SetCursorLocked(Application.isFocused);
     }
 
     private void OnDisable()
     {
-        moveAction?.Disable();
-        lookAction?.Disable();
+        DisposeInputActions();
+        controlsPaused = true;
         verticalVelocity = 0f;
         SetModelVisible(true);
         SetCursorLocked(false);
@@ -88,15 +97,31 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnDestroy()
     {
+        DisposeInputActions();
+    }
+
+    private void DisposeInputActions()
+    {
         moveAction?.Dispose();
         lookAction?.Dispose();
+        moveAction = null;
+        lookAction = null;
     }
 
     private void OnApplicationFocus(bool hasFocus)
     {
+        if (!isActiveAndEnabled)
+        {
+            return;
+        }
+
         if (!hasFocus)
         {
             SetCursorLocked(false);
+        }
+        else if (!controlsPaused)
+        {
+            SetCursorLocked(true);
         }
     }
 
@@ -106,25 +131,33 @@ public class PlayerMovement : MonoBehaviour
 
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
+            controlsPaused = true;
             SetCursorLocked(false);
             cursorChanged = true;
         }
-        else if (Application.isFocused && Cursor.lockState != CursorLockMode.Locked &&
+        else if (Application.isFocused && controlsPaused &&
                  Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
+            controlsPaused = false;
             SetCursorLocked(true);
             cursorChanged = true;
         }
 
-        bool controlsActive = Application.isFocused &&
-                              Cursor.lockState == CursorLockMode.Locked && !cursorChanged;
+        // Unity kann den Cursor-Lock beim Fokuswechsel aufheben.
+        // WASD darf dadurch nicht dauerhaft blockiert werden.
+        bool controlsActive = Application.isFocused && !controlsPaused;
+        if (controlsActive && Cursor.lockState != CursorLockMode.Locked)
+        {
+            SetCursorLocked(true);
+            cursorChanged = true;
+        }
 
         if (Time.deltaTime <= 0f)
         {
             return;
         }
 
-        if (controlsActive)
+        if (controlsActive && !cursorChanged && Cursor.lockState == CursorLockMode.Locked)
         {
             Look();
         }
