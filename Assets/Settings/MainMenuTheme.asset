@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dbacb2414dc974448827c731c3756377, type: 3}
-  m_Name: ThemeSettings_ModernMenuUI
+  m_Name: MainMenuTheme
   m_EditorClassIdentifier: 
   custom1:
-    graphic1: {r: 1, g: 0.6862745, b: 0, a: 1}
+    graphic1: {r: 0.10486521, g: 0.7924528, b: 0.018689923, a: 1}
     text1:
       serializedVersion: 2
       rgba: 4294967295
@@ -27,7 +27,7 @@ MonoBehaviour:
     text3:
       serializedVersion: 2
       rgba: 4293066721
-  currentColor: {r: 1, g: 0.6862745, b: 0, a: 1}
+  currentColor: {r: 0.10486521, g: 0.7924528, b: 0.018689923, a: 1}
   textColor:
     serializedVersion: 2
     rgba: 4294967295
