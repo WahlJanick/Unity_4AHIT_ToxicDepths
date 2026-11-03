@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using ToxicDepths;
 
-[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(CharacterController), typeof(PlayerVitals))]
 [DisallowMultipleComponent]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Bewegung")]
     [SerializeField, Min(0f)] private float moveSpeed = 5f;
+    [SerializeField, Min(0f)] private float sprintSpeed = 8.5f;
     [Tooltip("Beschleunigung nach unten in Metern pro Sekunde zum Quadrat.")]
     [SerializeField] private float gravity = -20f;
 
@@ -26,9 +28,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField, Range(0f, 89f)] private float maxLookAngle = 85f;
 
     private CharacterController controller;
+    private PlayerVitals vitals;
     private InputAction moveAction;
     private InputAction lookAction;
     private InputAction jumpAction;
+    private InputAction sprintAction;
     private float verticalVelocity;
     private float cameraPitch;
     private float cameraYaw;
@@ -41,11 +45,13 @@ public class PlayerMovement : MonoBehaviour
         // Die Schwerkraft muss nach unten wirken, damit die Sprungberechnung gueltig bleibt.
         gravity = -Mathf.Max(Mathf.Abs(gravity), 0.01f);
         jumpHeight = Mathf.Max(0f, jumpHeight);
+        sprintSpeed = Mathf.Max(moveSpeed, sprintSpeed);
     }
 
     private bool InitializePlayer()
     {
         controller = GetComponent<CharacterController>();
+        vitals = GetComponent<PlayerVitals>();
 
         if (playerCamera == null)
         {
@@ -82,6 +88,8 @@ public class PlayerMovement : MonoBehaviour
 
         lookAction = new InputAction("Look", InputActionType.Value, "<Mouse>/delta");
         jumpAction = new InputAction("Jump", InputActionType.Button, "<Keyboard>/space");
+        sprintAction = new InputAction("Sprint", InputActionType.Button, "<Keyboard>/leftShift");
+        sprintAction.AddBinding("<Keyboard>/rightShift");
         return true;
     }
 
@@ -97,6 +105,7 @@ public class PlayerMovement : MonoBehaviour
         moveAction.Enable();
         lookAction.Enable();
         jumpAction.Enable();
+        sprintAction.Enable();
         controlsPaused = false;
         SetModelVisible(false);
         if (firstPersonHeldItem != null) firstPersonHeldItem.SetActive(true);
@@ -107,6 +116,7 @@ public class PlayerMovement : MonoBehaviour
     {
         DisposeInputActions();
         controlsPaused = true;
+        if (vitals != null) vitals.StopSprint();
         verticalVelocity = 0f;
         SetModelVisible(true);
         if (firstPersonHeldItem != null) firstPersonHeldItem.SetActive(false);
@@ -123,9 +133,11 @@ public class PlayerMovement : MonoBehaviour
         moveAction?.Dispose();
         lookAction?.Dispose();
         jumpAction?.Dispose();
+        sprintAction?.Dispose();
         moveAction = null;
         lookAction = null;
         jumpAction = null;
+        sprintAction = null;
     }
 
     private void OnApplicationFocus(bool hasFocus)
@@ -203,7 +215,10 @@ public class PlayerMovement : MonoBehaviour
         // Auch bei einer um 180 Grad gedrehten Kamera bewegt W nach vorne.
         Vector3 forward = Vector3.ProjectOnPlane(playerCamera.transform.forward, Vector3.up).normalized;
         Vector3 right = Vector3.Cross(Vector3.up, forward);
-        Vector3 velocity = (right * input.x + forward * input.y) * moveSpeed;
+        bool wantsToSprint = controlsActive && input.sqrMagnitude > 0.01f && sprintAction.IsPressed();
+        float sprintFraction = vitals.UpdateSprint(wantsToSprint, Time.deltaTime);
+        float speed = Mathf.Lerp(moveSpeed, Mathf.Max(moveSpeed, sprintSpeed), sprintFraction);
+        Vector3 velocity = (right * input.x + forward * input.y) * speed;
 
         bool grounded = controller.isGrounded;
         if (grounded && verticalVelocity < 0f)

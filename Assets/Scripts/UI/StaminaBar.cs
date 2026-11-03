@@ -9,7 +9,7 @@ namespace ToxicDepths.UI
     public sealed class StaminaBar : MonoBehaviour
     {
         [Header("Ausdauer")]
-        [Tooltip("0 = leer, 1 = voll. Spaeter aus der Spielersteuerung aktualisieren.")]
+        [Tooltip("0 = leer, 1 = volle Basisstamina. Wird von PlayerVitals aktualisiert.")]
         [SerializeField, Range(0f, 1f)] private float normalizedValue = 1f;
 
         [Header("Farbe")]
