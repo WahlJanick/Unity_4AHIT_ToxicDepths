@@ -1,38 +1,71 @@
 # Toxic Depths
 
-**Toxic Depths** ist ein 3D-First-Person-Mining-Abenteuer, in dem Erkundung, Ressourcenmanagement und Überleben im Mittelpunkt stehen.
+**Trello:** https://trello.com/b/nFFamfgQ/itpprojekt4ahitunity
 
-Tief unter der Erde wartet eine gefährliche Mine voller wertvoller Erze. Doch du bist nicht freiwillig dort: Dein Arbeitgeber erwartet, dass du eine bestimmte **Quote** erfüllst. Erst wenn du genügend wertvolle Rohstoffe gesammelt hast, darfst du die Mine wieder verlassen.
+**Toxic Depths** ist ein 3D-First-Person-Mining-Abenteuer, das mit **Unity und C#** entwickelt wird. Im Mittelpunkt stehen Erkundung, Ressourcenmanagement und Überleben.
+
+Tief unter der Erde befindet sich eine gefährliche Mine voller wertvoller Erze. Der Spieler muss im Auftrag seines Arbeitgebers eine bestimmte **Quote** erfüllen. Erst wenn genügend wertvolle Rohstoffe gesammelt wurden, darf er die Mine wieder verlassen.
 
 ## Die Spielidee
 
-Erkunde verzweigte Höhlen, baue Erze mit unterschiedlichen Eigenschaften ab und entscheide, wie weit du dich in die Tiefe vorwagst. Je tiefer du kommst, desto wertvoller können deine Funde sein – aber desto größer werden auch die Gefahren.
+Der Spieler erkundet eine verzweigte Höhlenwelt, baut unterschiedliche Erze ab und sammelt wertvolle Ressourcen. Je tiefer er in die Mine vordringt, desto wertvoller können die Funde werden – gleichzeitig steigen jedoch auch die Gefahren.
 
-Deine Energie ist begrenzt, und manche Erze können giftig sein. Deshalb musst du abwägen, ob sich ein weiterer Abstecher lohnt oder ob du lieber zum Händler zurückkehrst. Dort kannst du gesammelte Erze verkaufen und mit dem verdienten Geld nützliche Items und bessere Ausrüstung kaufen, um dich auf die nächste Erkundung vorzubereiten.
+Während der Erkundung müssen **Energie, Stamina und Gesundheit** berücksichtigt werden. Sprinten verbraucht Ausdauer und indirekt Energie, während giftige Erze eine zusätzliche Gefahr darstellen.
 
-## Dein Ziel
+Bei einem Händler können gesammelte Rohstoffe verkauft und mit dem verdienten Geld neue Items oder bessere Ausrüstung gekauft werden. Dadurch entsteht ein Gameplay-Kreislauf aus **Erkunden, Abbauen, Verkaufen und Aufrüsten**.
 
-**Erfülle deine Quote und verlasse die Mine lebendig.** Wer zu viel riskiert und seine Energie oder Gesundheit durch Gift verliert, scheitert. Erfolgreich ist, wer seine Ressourcen klug einsetzt und den richtigen Zeitpunkt für die Rückkehr findet.
+## Spielmechaniken
 
-## Atmosphäre
+Die wichtigsten Spielmechaniken umfassen:
 
-Mit einem **Low-Poly-Grafikstil**, einer geheimnisvollen Höhlenwelt und atmosphärischen Geräuschen soll *Toxic Depths* das Gefühl vermitteln, auf sich allein gestellt immer tiefer in eine unbekannte Mine vorzudringen.
+- **Bewegung:** First-Person-Steuerung mit WASD, Maus, Springen und Sprinten.
+- **Erzabbau:** Unterschiedliche Erze mit individuellen Eigenschaften und Werten.
+- **Ressourcenmanagement:** Energie und Stamina müssen während der Erkundung sinnvoll eingesetzt werden.
+- **Handelssystem:** Interaktion mit einem NPC zum Kaufen und Verkaufen von Gegenständen.
+- **Inventar und Hotbar:** Verwaltung und Nutzung von Items über eine Hotbar mit vier Slots.
+- **Quotensystem:** Sammeln ausreichend wertvoller Ressourcen, um die Mine verlassen zu dürfen.
 
-Das Spiel verbindet die Entdeckung neuer Höhlenbereiche mit dem motivierenden Kreislauf aus **Abbauen, Verkaufen, Aufrüsten und Weitererkunden**.
+Das HUD informiert den Spieler über wichtige Werte wie Energie, Stamina, Geld und den aktuellen Quotenfortschritt. Ein dynamisches Fadenkreuz unterstützt die Interaktion mit der Spielwelt.
 
-## Sprint, Stamina und Energie
+### Energie und Stamina
 
-Mit WASD bewegen, mit linker oder rechter Shift-Taste sprinten und mit Leertaste springen.
-Sprinten verbraucht nur bei Bewegung Stamina (20 Punkte pro Sekunde). Nach 0,8 Sekunden
-Pause regeneriert sie sich mit 30 Punkten pro Sekunde. Bei Ersch?pfung ist Sprinten
-wieder ab 20 % der verf?gbaren Maximalstamina m?glich.
+Das Bewegungssystem verbindet Stamina und Energie miteinander:
 
-Jeder verbrauchte Staminapunkt kostet au?erdem 0,05 Energie. Energie regeneriert sich
-nicht von selbst. Die maximale Stamina sinkt linear von 100 % bei voller Energie auf
-70 % bei leerer Energie; die Staminabar zeigt diese verringerte Kapazit?t mit an.
-Alle Werte lassen sich am Player in `PlayerVitals` und `PlayerMovement` einstellen.
+Beim Sprinten wird Stamina verbraucht, die sich nach einer kurzen Pause automatisch regeneriert. Zusätzlich kostet verbrauchte Stamina einen kleinen Teil der verfügbaren Energie.
 
-Sp?tere Verbrauchsitems k?nnen zum Beispiel
-`player.GetComponent<ToxicDepths.PlayerVitals>().RestoreEnergy(25f)` aufrufen.
-Das f?llt Energie bis zum Maximum auf und erh?ht damit wieder die Staminakapazit?t;
-die Stamina selbst erholt sich weiterhin ?ber die normale Regeneration.
+Je weniger Energie vorhanden ist, desto geringer fällt die maximale Staminakapazität aus. Energie regeneriert sich nicht automatisch, sondern muss beispielsweise durch kaufbare Verbrauchsitems wiederhergestellt werden.
+
+Die Umsetzung erfolgt über **C#-Skripte**, die Spielerbewegung, Ressourcenwerte und deren Darstellung im HUD steuern. Die wichtigsten Werte sind konfigurierbar, damit das Gameplay während der Entwicklung angepasst und ausbalanciert werden kann.
+
+## Technische Umsetzung und Arbeitsweise
+
+Das Spiel wird als **3D-PC-Spiel mit Unity** entwickelt. Die Spiellogik wird in C# umgesetzt, während Unity für die Gestaltung der Höhlenwelt, Animationen, Benutzeroberflächen und Soundeffekte verwendet wird.
+
+Die Entwicklung erfolgt schrittweise. Zunächst werden die grundlegenden Mechaniken wie Spielerbewegung, Erzabbau und Interaktionen umgesetzt und getestet. Anschließend werden diese Systeme erweitert und miteinander verbunden.
+
+Dabei wird auf eine **modulare Umsetzung** geachtet, sodass einzelne Spielmechaniken möglichst unabhängig entwickelt, getestet und später erweitert werden können.
+
+Für die Zusammenarbeit werden folgende Werkzeuge verwendet:
+
+- **Unity:** Spielentwicklung, Levelgestaltung und Einbindung der verschiedenen Spielsysteme.
+- **C#:** Programmierung der Spielmechaniken und Interaktionen.
+- **Git und GitHub:** Gemeinsame Versionsverwaltung und Zusammenführung der entwickelten Funktionen.
+- **Trello:** Aufgabenplanung, Dokumentation des Entwicklungsfortschritts.
+
+Das Projekt wird von **Janick Wahl und Michael Windhager** gemeinsam entwickelt. Die Aufgaben umfassen Gameplay-Programmierung, Weltgestaltung, Benutzeroberfläche und Sound.
+
+## Spielziel
+
+Das Hauptziel besteht darin, die vorgegebene **Quote zu erfüllen und die Mine lebendig zu verlassen**.
+
+Dabei muss der Spieler selbst entscheiden, wie lange er weiter nach Rohstoffen sucht und wann eine Rückkehr sinnvoller ist.
+
+Sinkt seine Energie auf null oder scheitert er durch eine Vergiftung, verliert er das Spiel. Gelingt es ihm hingegen, die Quote zu erfüllen und sicher zurückzukehren, gewinnt er.
+
+## Atmosphäre und Gestaltung
+
+*Toxic Depths* verwendet einen **Low-Poly-Grafikstil** mit einer geheimnisvollen, unterirdischen Höhlenwelt.
+
+Atmosphärische Höhlengeräusche, passende Beleuchtung und Animationen sollen das Gefühl verstärken, sich allein in einer gefährlichen Mine zu befinden.
+
+Im Vordergrund steht die Kombination aus **Erkundung, zunehmendem Risiko und langfristigem Spielfortschritt durch bessere Ausrüstung**.
