@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 [RequireComponent(typeof(CharacterController))]
 [DisallowMultipleComponent]
@@ -18,8 +17,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("Mausblick")]
     [Tooltip("Die Kamera muss ein Kindobjekt des Spielers sein.")]
     [SerializeField] private Camera playerCamera;
-    [Tooltip("Optional: das Pilzling-Modell. Es wirft Schatten, verdeckt aber die Ego-Sicht nicht.")]
+    [Tooltip("Optional: das Pilzling-Modell. Es wird in der Ego-Sicht inklusive Schatten ausgeblendet.")]
     [SerializeField] private Transform playerModel;
+    [Tooltip("Statisch gehaltenes Werkzeug mit Hand fuer die Ego-Sicht. Kindobjekt der Kamera.")]
+    [SerializeField] private GameObject firstPersonHeldItem;
     [Tooltip("Drehung in Grad pro Pixel Mausbewegung.")]
     [SerializeField, Min(0f)] private float mouseSensitivity = 0.1f;
     [SerializeField, Range(0f, 89f)] private float maxLookAngle = 85f;
@@ -32,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
     private float cameraPitch;
     private float cameraYaw;
     private Renderer[] modelRenderers;
-    private ShadowCastingMode[] originalShadowModes;
+    private bool[] originalRendererStates;
     private bool controlsPaused;
 
     private void OnValidate()
@@ -64,10 +65,10 @@ public class PlayerMovement : MonoBehaviour
         if (playerModel != null)
         {
             modelRenderers = playerModel.GetComponentsInChildren<Renderer>(true);
-            originalShadowModes = new ShadowCastingMode[modelRenderers.Length];
+            originalRendererStates = new bool[modelRenderers.Length];
             for (int i = 0; i < modelRenderers.Length; i++)
             {
-                originalShadowModes[i] = modelRenderers[i].shadowCastingMode;
+                originalRendererStates[i] = modelRenderers[i].enabled;
             }
         }
 
@@ -98,6 +99,7 @@ public class PlayerMovement : MonoBehaviour
         jumpAction.Enable();
         controlsPaused = false;
         SetModelVisible(false);
+        if (firstPersonHeldItem != null) firstPersonHeldItem.SetActive(true);
         SetCursorLocked(Application.isFocused);
     }
 
@@ -107,6 +109,7 @@ public class PlayerMovement : MonoBehaviour
         controlsPaused = true;
         verticalVelocity = 0f;
         SetModelVisible(true);
+        if (firstPersonHeldItem != null) firstPersonHeldItem.SetActive(false);
         SetCursorLocked(false);
     }
 
@@ -236,9 +239,7 @@ public class PlayerMovement : MonoBehaviour
         {
             if (modelRenderers[i] != null)
             {
-                modelRenderers[i].shadowCastingMode = visible
-                    ? originalShadowModes[i]
-                    : ShadowCastingMode.ShadowsOnly;
+                modelRenderers[i].enabled = visible && originalRendererStates[i];
             }
         }
     }
