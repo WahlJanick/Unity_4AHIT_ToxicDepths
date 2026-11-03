@@ -19,3 +19,20 @@ Deine Energie ist begrenzt, und manche Erze können giftig sein. Deshalb musst d
 Mit einem **Low-Poly-Grafikstil**, einer geheimnisvollen Höhlenwelt und atmosphärischen Geräuschen soll *Toxic Depths* das Gefühl vermitteln, auf sich allein gestellt immer tiefer in eine unbekannte Mine vorzudringen.
 
 Das Spiel verbindet die Entdeckung neuer Höhlenbereiche mit dem motivierenden Kreislauf aus **Abbauen, Verkaufen, Aufrüsten und Weitererkunden**.
+
+## Sprint, Stamina und Energie
+
+Mit WASD bewegen, mit linker oder rechter Shift-Taste sprinten und mit Leertaste springen.
+Sprinten verbraucht nur bei Bewegung Stamina (20 Punkte pro Sekunde). Nach 0,8 Sekunden
+Pause regeneriert sie sich mit 30 Punkten pro Sekunde. Bei Ersch?pfung ist Sprinten
+wieder ab 20 % der verf?gbaren Maximalstamina m?glich.
+
+Jeder verbrauchte Staminapunkt kostet au?erdem 0,05 Energie. Energie regeneriert sich
+nicht von selbst. Die maximale Stamina sinkt linear von 100 % bei voller Energie auf
+70 % bei leerer Energie; die Staminabar zeigt diese verringerte Kapazit?t mit an.
+Alle Werte lassen sich am Player in `PlayerVitals` und `PlayerMovement` einstellen.
+
+Sp?tere Verbrauchsitems k?nnen zum Beispiel
+`player.GetComponent<ToxicDepths.PlayerVitals>().RestoreEnergy(25f)` aufrufen.
+Das f?llt Energie bis zum Maximum auf und erh?ht damit wieder die Staminakapazit?t;
+die Stamina selbst erholt sich weiterhin ?ber die normale Regeneration.

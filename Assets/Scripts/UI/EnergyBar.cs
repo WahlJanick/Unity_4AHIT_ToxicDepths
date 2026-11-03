@@ -9,7 +9,7 @@ namespace ToxicDepths.UI
     public sealed class EnergyBar : MonoBehaviour
     {
         [Header("Energie")]
-        [Tooltip("0 = leer, 1 = voll. Spaeter aus der Spielersteuerung aktualisieren.")]
+        [Tooltip("0 = leer, 1 = voll. Wird von PlayerVitals aktualisiert.")]
         [SerializeField, Range(0f, 1f)] private float normalizedValue = 1f;
 
         [Header("Farbe")]
