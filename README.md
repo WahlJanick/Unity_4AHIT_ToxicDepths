@@ -1,44 +1,21 @@
-# Unity_4AHIT_ToxicDepths
+# Toxic Depths
 
-Zum Starten `Assets/Scenes/MainMenu.unity` in Unity oeffnen und Play starten.
-Im Menue laedt **Play > New Game** die `SampleScene`. **Continue** und
-**Load Game** bleiben bis zur Einbindung eines Speichersystems deaktiviert.
+**Toxic Depths** ist ein 3D-First-Person-Mining-Abenteuer, in dem Erkundung, Ressourcenmanagement und Überleben im Mittelpunkt stehen.
 
-Die MainMenu-Dateien liegen hier:
+Tief unter der Erde wartet eine gefährliche Mine voller wertvoller Erze. Doch du bist nicht freiwillig dort: Dein Arbeitgeber erwartet, dass du eine bestimmte **Quote** erfüllst. Erst wenn du genügend wertvolle Rohstoffe gesammelt hast, darfst du die Mine wieder verlassen.
 
-- Szene: `Assets/Scenes/MainMenu.unity`
-- Zugehoerige Lichtdaten: `Assets/Scenes/MainMenu/`
-- Menue-Prefab: `Assets/Prefabs/UI/MainMenu.prefab`
-- Farben: `Assets/Settings/MainMenuTheme.asset`
-- Beleuchtungseinstellungen: `Assets/Settings/MainMenuLighting.lighting`
+## Die Spielidee
 
-Das Menue verwendet weiterhin Skripte, Grafiken und Animationen aus `Assets/SlimUI/`.
+Erkunde verzweigte Höhlen, baue Erze mit unterschiedlichen Eigenschaften ab und entscheide, wie weit du dich in die Tiefe vorwagst. Je tiefer du kommst, desto wertvoller können deine Funde sein – aber desto größer werden auch die Gefahren.
 
-Die vertikalen Anzeigen `Assets/Prefabs/UI/StaminaBar.prefab` (hellblau) und
-`Assets/Prefabs/UI/EnergyBar.prefab` (gruen) sind in `SampleScene` eingebunden.
-Sie liegen als Screen Space Overlay links unten mit 36 Pixeln Abstand zum
-unteren Rand bei einer Referenzaufloesung von 1920 x 1080. Die StaminaBar beginnt
-bei x=36, die EnergyBar daneben bei x=100. Beide verwenden die Grafiken und
-Skripte aus dem importierten Progress-Bar-Paket.
+Deine Energie ist begrenzt, und manche Erze können giftig sein. Deshalb musst du abwägen, ob sich ein weiterer Abstecher lohnt oder ob du lieber zum Händler zurückkehrst. Dort kannst du gesammelte Erze verkaufen und mit dem verdienten Geld nützliche Items und bessere Ausrüstung kaufen, um dich auf die nächste Erkundung vorzubereiten.
 
-Am Wurzelobjekt **StaminaBar** laesst sich unter **Stamina Bar > Fill Color**
-die hellblaue Farbe aendern. Entsprechend laesst sich **EnergyBar** unter
-**Energy Bar > Fill Color** anpassen. **Normalized Value** bestimmt den Fuellstand:
-0 = leer, 0.5 = halbvoll, 1 = voll. Der Startwert ist 1.
-Die Spielersteuerung kann die Anzeige spaeter ueber
-`ToxicDepths.UI.StaminaBar.SetStamina(current, maximum)` und
-`ToxicDepths.UI.EnergyBar.SetEnergy(current, maximum)` unabhaengig aktualisieren;
-Verbrauch und Regeneration sind noch nicht implementiert.
+## Dein Ziel
 
-Die Hotbar liegt unter `Assets/Prefabs/UI/Hotbar.prefab` und ist ebenfalls in
-`SampleScene` eingebunden. Ihre vier Slots liegen bei x=168, y=36 rechts neben
-den beiden Balken. Mit **1-4** oder dem **Mausrad** laesst sich der aktive Slot wechseln;
-das funktioniert waehrend der Ego-Steuerung, bei gesperrtem Mauszeiger.
+**Erfülle deine Quote und verlasse die Mine lebendig.** Wer zu viel riskiert und seine Energie oder Gesundheit durch Gift verliert, scheitert. Erfolgreich ist, wer seine Ressourcen klug einsetzt und den richtigen Zeitpunkt für die Rückkehr findet.
 
-Am Wurzelobjekt **Hotbar** im **Hotbar Controller** unter **Slots** koennen
-Item-Icons (Sprite) und Mengen eingestellt werden. Ohne Icon bleibt ein Slot
-leer; Mengen werden erst ab 2 angezeigt. Die Auswahl wird gruen hervorgehoben.
-Ein Inventar oder ausgeruestete Werkzeuge sind noch nicht angebunden.
-Das Ereignis **On Selection Changed** liefert dafuer den gewaehlten Index 0-3.
-Aus Code koennen die Slots ueber `HotbarController.SetSlot(index, icon, count)`
-aktualisiert und mit `SelectSlot(index)` ausgewaehlt werden.
+## Atmosphäre
+
+Mit einem **Low-Poly-Grafikstil**, einer geheimnisvollen Höhlenwelt und atmosphärischen Geräuschen soll *Toxic Depths* das Gefühl vermitteln, auf sich allein gestellt immer tiefer in eine unbekannte Mine vorzudringen.
+
+Das Spiel verbindet die Entdeckung neuer Höhlenbereiche mit dem motivierenden Kreislauf aus **Abbauen, Verkaufen, Aufrüsten und Weitererkunden**.
