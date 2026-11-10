@@ -29,6 +29,7 @@ namespace ToxicDepths.UI
         private bool playingTimedSwing;
 
         public float CurrentScale => currentScale;
+        public float ImpactTime => Mathf.Clamp(impactTime, 0.01f, 0.99f);
 
         protected override void OnEnable()
         {

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using ToxicDepths;
+using ToxicDepths.Mining;
 
 [RequireComponent(typeof(CharacterController), typeof(PlayerVitals))]
 [DisallowMultipleComponent]
@@ -29,6 +30,7 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController controller;
     private PlayerVitals vitals;
+    private PlayerMining mining;
     private InputAction moveAction;
     private InputAction lookAction;
     private InputAction jumpAction;
@@ -39,6 +41,12 @@ public class PlayerMovement : MonoBehaviour
     private Renderer[] modelRenderers;
     private bool[] originalRendererStates;
     private bool controlsPaused;
+    private bool shopOpen;
+    private int controlsResumedFrame;
+
+    public bool CanUseTools => isActiveAndEnabled && Application.isFocused &&
+        !controlsPaused && !shopOpen && Time.timeScale > 0f && Cursor.lockState == CursorLockMode.Locked &&
+        Time.frameCount > controlsResumedFrame;
 
     private void OnValidate()
     {
@@ -52,6 +60,7 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         vitals = GetComponent<PlayerVitals>();
+        TryGetComponent(out mining);
 
         if (playerCamera == null)
         {
@@ -107,8 +116,11 @@ public class PlayerMovement : MonoBehaviour
         jumpAction.Enable();
         sprintAction.Enable();
         controlsPaused = false;
+        shopOpen = false;
+        controlsResumedFrame = Time.frameCount;
         SetModelVisible(false);
-        if (firstPersonHeldItem != null) firstPersonHeldItem.SetActive(true);
+        if (firstPersonHeldItem != null)
+            firstPersonHeldItem.SetActive(mining == null || mining.ShouldShowPickaxe);
         SetCursorLocked(Application.isFocused);
     }
 
@@ -147,18 +159,33 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        controlsResumedFrame = Time.frameCount;
+
         if (!hasFocus)
         {
             SetCursorLocked(false);
         }
-        else if (!controlsPaused)
+        else if (!controlsPaused && !shopOpen)
         {
             SetCursorLocked(true);
         }
     }
 
+    internal void SetShopOpen(bool open)
+    {
+        shopOpen = open;
+        controlsResumedFrame = Time.frameCount;
+        SetCursorLocked(!open && !controlsPaused && isActiveAndEnabled && Application.isFocused);
+    }
+
     private void Update()
     {
+        if (shopOpen)
+        {
+            if (Time.deltaTime > 0f) Move(false);
+            return;
+        }
+
         bool cursorChanged = false;
 
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -183,6 +210,8 @@ public class PlayerMovement : MonoBehaviour
             SetCursorLocked(true);
             cursorChanged = true;
         }
+
+        if (cursorChanged) controlsResumedFrame = Time.frameCount;
 
         if (Time.deltaTime <= 0f)
         {
@@ -215,7 +244,8 @@ public class PlayerMovement : MonoBehaviour
         // Auch bei einer um 180 Grad gedrehten Kamera bewegt W nach vorne.
         Vector3 forward = Vector3.ProjectOnPlane(playerCamera.transform.forward, Vector3.up).normalized;
         Vector3 right = Vector3.Cross(Vector3.up, forward);
-        bool wantsToSprint = controlsActive && input.sqrMagnitude > 0.01f && sprintAction.IsPressed();
+        bool wantsToSprint = controlsActive && input.sqrMagnitude > 0.01f && sprintAction.IsPressed() &&
+            (mining == null || !mining.IsCarryingOre);
         float sprintFraction = vitals.UpdateSprint(wantsToSprint, Time.deltaTime);
         float speed = Mathf.Lerp(moveSpeed, Mathf.Max(moveSpeed, sprintSpeed), sprintFraction);
         Vector3 velocity = (right * input.x + forward * input.y) * speed;

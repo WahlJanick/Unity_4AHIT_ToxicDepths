@@ -52,6 +52,13 @@ namespace ToxicDepths
 
         public void StopSprint() => IsSprinting = false;
 
+        public bool TrySpendStamina(float amount)
+        {
+            bool spent = State.TrySpendStamina(amount);
+            RefreshBars();
+            return spent;
+        }
+
         // Future consumables can call this with an energy amount, e.g. RestoreEnergy(25f).
         public void RestoreEnergy(float amount)
         {
