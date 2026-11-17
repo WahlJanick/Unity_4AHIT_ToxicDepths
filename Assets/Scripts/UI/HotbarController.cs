@@ -9,7 +9,7 @@ namespace ToxicDepths.UI
     [DisallowMultipleComponent]
     public sealed class HotbarController : MonoBehaviour
     {
-        public const int SlotCount = 4;
+        public const int SlotCount = 6;
 
         [Serializable]
         public sealed class Slot
@@ -18,12 +18,12 @@ namespace ToxicDepths.UI
             [Min(0)] public int count = 1;
         }
 
-        [Header("Vier Plaetze")]
-        [SerializeField] private Slot[] slots = { new Slot(), new Slot(), new Slot(), new Slot() };
+        [Header("Hotbar-Slots")]
+        [SerializeField] private Slot[] slots = { new Slot(), new Slot(), new Slot(), new Slot(), new Slot(), new Slot() };
         [SerializeField, Range(0, SlotCount - 1)] private int selectedIndex;
         [Header("Anzeige")]
         [SerializeField] private HotbarSlotUI[] slotViews = new HotbarSlotUI[SlotCount];
-        [Header("Werkzeugwechsel (Index 0 bis 3)")]
+        [Header("Werkzeugwechsel")]
         [SerializeField] private UnityEvent<int> onSelectionChanged = new UnityEvent<int>();
 
         public int SelectedIndex => selectedIndex;
@@ -31,7 +31,7 @@ namespace ToxicDepths.UI
 
         private void OnEnable()
         {
-            EnsureFourSlots();
+            EnsureSlots();
             Refresh(true);
         }
 
@@ -48,6 +48,8 @@ namespace ToxicDepths.UI
                 if (keyboard.digit2Key.wasPressedThisFrame) { SelectSlot(1); return; }
                 if (keyboard.digit3Key.wasPressedThisFrame) { SelectSlot(2); return; }
                 if (keyboard.digit4Key.wasPressedThisFrame) { SelectSlot(3); return; }
+                if (keyboard.digit5Key.wasPressedThisFrame) { SelectSlot(4); return; }
+                if (keyboard.digit6Key.wasPressedThisFrame) { SelectSlot(5); return; }
             }
             Mouse mouse = Mouse.current;
             if (mouse == null) return;
@@ -67,7 +69,7 @@ namespace ToxicDepths.UI
         public void SetSlot(int index, Sprite icon, int count = 1)
         {
             if (index < 0 || index >= SlotCount) return;
-            EnsureFourSlots();
+            EnsureSlots();
             slots[index].icon = icon;
             slots[index].count = Mathf.Max(0, count);
             Refresh(false);
@@ -83,7 +85,7 @@ namespace ToxicDepths.UI
             }
         }
 
-        private void EnsureFourSlots()
+        private void EnsureSlots()
         {
             if (slots == null) slots = new Slot[SlotCount];
             if (slotViews == null) slotViews = new HotbarSlotUI[SlotCount];
@@ -98,7 +100,7 @@ namespace ToxicDepths.UI
 
         private void OnValidate()
         {
-            EnsureFourSlots();
+            EnsureSlots();
             selectedIndex = Mathf.Clamp(selectedIndex, 0, SlotCount - 1);
             Refresh(true);
         }

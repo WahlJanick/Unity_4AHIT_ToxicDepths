@@ -59,6 +59,16 @@ namespace ToxicDepths
             return 0f;
         }
 
+        // Discrete actions must pay their full cost; a rejected swing spends nothing.
+        public bool TrySpendStamina(float amount)
+        {
+            if (float.IsNaN(amount) || float.IsInfinity(amount) || amount < 0f) return false;
+            if (amount == 0f) return true;
+            if (IsExhausted || Stamina < amount || Energy < amount * energyPerStamina) return false;
+            ConsumeStamina(amount);
+            return true;
+        }
+
         public float ConsumeStamina(float amount)
         {
             if (amount <= 0f) return 0f;
