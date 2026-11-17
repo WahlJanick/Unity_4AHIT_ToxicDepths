@@ -37,6 +37,14 @@ Je weniger Energie vorhanden ist, desto geringer fällt die maximale Staminakapa
 
 Die Umsetzung erfolgt über **C#-Skripte**, die Spielerbewegung, Ressourcenwerte und deren Darstellung im HUD steuern. Die wichtigsten Werte sind konfigurierbar, damit das Gameplay während der Entwicklung angepasst und ausbalanciert werden kann.
 
+## Geldanzeige (CurrencyCount)
+
+`Assets/Prefabs/UI/CurrencyCount.prefab` ist in der Spielszene `SampleScene` eingebaut und zeigt rechts oben den Geldstand (anfangs 0 Credits). Hintergrund, Rahmen und Schrift passen zur Hotbar. Einnahmen und Ausgaben werden kurz darunter grün bzw. rot angezeigt.
+
+Das spätere Geldsystem kann die Anzeige über `ToxicDepths.UI.CurrencyCount.SetAmount(neuerGeldstand)` aktualisieren. Zum Laden eines Spielstands ohne Änderungsanzeige: `SetAmount(geladenerGeldstand, showChange: false)`. Die Komponente stellt nur den Wert dar; Smaragde, Inventar und Shop bleiben davon unabhängig.
+
+Das bereitgestellte Münzsymbol liegt als transparentes Sprite unter `Assets/Textures/UI/Coin.png`; die SVG-Vorlage ist unter `SourceAssets/UI/coin-svgrepo-com.svg` archiviert und aus dem Hauptordner entfernt.
+
 ## Technische Umsetzung und Arbeitsweise
 
 Das Spiel wird als **3D-PC-Spiel mit Unity** entwickelt. Die Spiellogik wird in C# umgesetzt, während Unity für die Gestaltung der Höhlenwelt, Animationen, Benutzeroberflächen und Soundeffekte verwendet wird.
