@@ -1960,6 +1960,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf781fba354e3a8468415f0f09d61577, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+--- !u!1001 &9000000800
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 58c197e4e1cf43aaaf132915f51490eb, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1970,6 +1983,7 @@ SceneRoots:
   - {fileID: 9000000400}
   - {fileID: 9000000500}
   - {fileID: 9000000600}
+  - {fileID: 9000000800}
   - {fileID: 1530115347}
   - {fileID: 1481599466}
   - {fileID: 273652612}
