@@ -12,6 +12,7 @@ namespace ToxicDepths.Mining
         private Rigidbody body;
         private BoxCollider hitbox;
         private MeshRenderer[] visuals;
+        private bool[] hiddenRenderStates;
         private MeshRenderer[] outlineRenderers;
         private Pose[] restVisualPoses;
         private Pose heldVisualAdjustment = Pose.identity;
@@ -124,6 +125,26 @@ namespace ToxicDepths.Mining
             transform.SetPositionAndRotation(grip.position, grip.rotation);
         }
 
+        internal void SetHeldModelVisible(bool visible)
+        {
+            if (visible)
+            {
+                if (hiddenRenderStates == null) return;
+                for (int i = 0; i < visuals.Length; i++)
+                    visuals[i].forceRenderingOff = hiddenRenderStates[i];
+                hiddenRenderStates = null;
+                return;
+            }
+
+            if (hiddenRenderStates != null) return;
+            hiddenRenderStates = new bool[visuals.Length];
+            for (int i = 0; i < visuals.Length; i++)
+            {
+                hiddenRenderStates[i] = visuals[i].forceRenderingOff;
+                visuals[i].forceRenderingOff = true;
+            }
+        }
+
         internal void SetViewLayer(int layer)
         {
             foreach (var renderer in visuals)
@@ -219,6 +240,7 @@ namespace ToxicDepths.Mining
 
         private void Release(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 spin)
         {
+            SetHeldModelVisible(true);
             IsHeld = false;
             body.position = position;
             body.rotation = rotation;

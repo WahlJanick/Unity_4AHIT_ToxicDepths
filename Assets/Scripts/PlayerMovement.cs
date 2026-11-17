@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using ToxicDepths;
@@ -42,10 +43,15 @@ public class PlayerMovement : MonoBehaviour
     private bool[] originalRendererStates;
     private bool controlsPaused;
     private bool shopOpen;
+    private FrogGreeting activeConversation;
+    private readonly List<Canvas> hiddenHud = new();
     private int controlsResumedFrame;
 
+    internal bool IsInConversation => activeConversation != null;
+    private bool HasModalInput => shopOpen || IsInConversation;
+
     public bool CanUseTools => isActiveAndEnabled && Application.isFocused &&
-        !controlsPaused && !shopOpen && Time.timeScale > 0f && Cursor.lockState == CursorLockMode.Locked &&
+        !controlsPaused && !HasModalInput && Time.timeScale > 0f && Cursor.lockState == CursorLockMode.Locked &&
         Time.frameCount > controlsResumedFrame;
 
     private void OnValidate()
@@ -128,6 +134,7 @@ public class PlayerMovement : MonoBehaviour
     {
         DisposeInputActions();
         controlsPaused = true;
+        if (activeConversation != null) activeConversation.Close();
         if (vitals != null) vitals.StopSprint();
         verticalVelocity = 0f;
         SetModelVisible(true);
@@ -165,7 +172,7 @@ public class PlayerMovement : MonoBehaviour
         {
             SetCursorLocked(false);
         }
-        else if (!controlsPaused && !shopOpen)
+        else if (!controlsPaused && !HasModalInput)
         {
             SetCursorLocked(true);
         }
@@ -174,21 +181,77 @@ public class PlayerMovement : MonoBehaviour
     internal void SetShopOpen(bool open)
     {
         shopOpen = open;
+        UpdateInteractionCursor();
+    }
+
+    internal bool TryBeginConversation(FrogGreeting conversation)
+    {
+        if (!isActiveAndEnabled || controlsPaused || HasModalInput) return false;
+
+        activeConversation = conversation;
+        RefreshConversationPresentation();
+        UpdateInteractionCursor();
+        return true;
+    }
+
+    internal void EndConversation(FrogGreeting conversation)
+    {
+        if (activeConversation != conversation) return;
+
+        activeConversation = null;
+        RefreshConversationPresentation();
+        UpdateInteractionCursor();
+    }
+
+    private void RefreshConversationPresentation()
+    {
+        if (IsInConversation)
+        {
+            foreach (var canvas in FindObjectsByType<Canvas>())
+            {
+                if (canvas.gameObject.scene == gameObject.scene && canvas.enabled &&
+                    canvas.rootCanvas.renderMode != RenderMode.WorldSpace)
+                    hiddenHud.Add(canvas);
+            }
+
+            foreach (var canvas in hiddenHud) canvas.enabled = false;
+        }
+        else
+        {
+            foreach (var canvas in hiddenHud)
+            {
+                if (canvas != null) canvas.enabled = true;
+            }
+
+            hiddenHud.Clear();
+        }
+
+        if (firstPersonHeldItem != null)
+            firstPersonHeldItem.SetActive(isActiveAndEnabled && !IsInConversation &&
+                (mining == null || mining.ShouldShowPickaxe));
+        if (mining != null && mining.isActiveAndEnabled) mining.RefreshHeldItemVisibility();
+    }
+
+    private void UpdateInteractionCursor()
+    {
         controlsResumedFrame = Time.frameCount;
-        SetCursorLocked(!open && !controlsPaused && isActiveAndEnabled && Application.isFocused);
+        SetCursorLocked(!HasModalInput && !controlsPaused && isActiveAndEnabled && Application.isFocused);
     }
 
     private void Update()
     {
-        if (shopOpen)
+        var keyboard = Keyboard.current;
+        if (HasModalInput)
         {
+            if (activeConversation != null && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+                activeConversation.Close();
             if (Time.deltaTime > 0f) Move(false);
             return;
         }
 
         bool cursorChanged = false;
 
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
         {
             controlsPaused = true;
             SetCursorLocked(false);
@@ -218,7 +281,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (controlsActive && !cursorChanged && Cursor.lockState == CursorLockMode.Locked)
+        if (controlsActive && !cursorChanged && Time.frameCount > controlsResumedFrame && Cursor.lockState == CursorLockMode.Locked)
         {
             Look();
         }

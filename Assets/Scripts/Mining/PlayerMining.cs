@@ -13,6 +13,7 @@ namespace ToxicDepths.Mining
     public sealed class PlayerMining : MonoBehaviour
     {
         private const int PickaxeSlot = 5;
+        private const string ShopCounterLayer = "Shop Counter";
 
         [Header("Referenzen")]
         [SerializeField] private Camera playerCamera;
@@ -47,6 +48,7 @@ namespace ToxicDepths.Mining
         private PlayerVitals vitals;
         private PlayerMovement movement;
         private ShredderShop shop;
+        private int shopCounterLayer;
         private Rigidbody displayedOutput;
         private Transform outputGrip;
         private Transform outputHand;
@@ -77,12 +79,14 @@ namespace ToxicDepths.Mining
         private bool CanInteract => isActiveAndEnabled && movement != null && movement.CanUseTools &&
             playerCamera != null;
         private float ImpactTime => crosshair != null ? crosshair.ImpactTime : impactTime;
+        private bool HeldItemsVisible => movement.isActiveAndEnabled && !movement.IsInConversation;
 
         private void Awake()
         {
             vitals = GetComponent<PlayerVitals>();
             movement = GetComponent<PlayerMovement>();
             TryGetComponent(out shop);
+            shopCounterLayer = LayerMask.NameToLayer(ShopCounterLayer);
             if (playerCamera == null) playerCamera = GetComponentInChildren<Camera>();
         }
 
@@ -118,15 +122,18 @@ namespace ToxicDepths.Mining
             }
 
             var keyboard = Keyboard.current;
+            bool interactPressed = keyboard != null && keyboard.eKey.wasPressedThisFrame;
             if (IsCarryingOre)
             {
+                if (interactPressed && TryAim(out var carriedAim)) TryGreet(carriedAim.collider);
                 UpdateThrowCharge(keyboard);
                 return;
             }
 
-            var pickup = FindPickup();
+            TryAim(out var aim);
+            var pickup = GetPickup(aim.collider);
             SetOutlinedOre(pickup);
-            if (pickup != null && keyboard != null && keyboard.eKey.wasPressedThisFrame && TryPickUp(pickup))
+            if (interactPressed && ((pickup != null && TryPickUp(pickup)) || TryGreet(aim.collider)))
                 return;
 
             if (!CanControlTool()) return;
@@ -159,8 +166,7 @@ namespace ToxicDepths.Mining
 
         private void LateUpdate()
         {
-            SetOutputView(!IsCarryingOre && movement.isActiveAndEnabled && playerCamera != null && shop != null
-                ? shop.SelectedOutput : null);
+            RefreshOutputView();
 
             if (!IsSwinging) return;
             if (!CanControlTool()) { CancelSwing(); return; }
@@ -185,11 +191,13 @@ namespace ToxicDepths.Mining
             return TryAim(out RaycastHit hit) ? GetDeposit(hit.collider) : null;
         }
 
-        internal bool TryAim(out RaycastHit hit)
+        internal bool TryAim(out RaycastHit hit) => TryAimOnLayers(hitLayers, out hit);
+
+        private bool TryAimOnLayers(int layers, out RaycastHit hit)
         {
             hit = default;
             return playerCamera != null && Physics.Raycast(playerCamera.transform.position,
-                playerCamera.transform.forward, out hit, reach, hitLayers, QueryTriggerInteraction.Ignore);
+                playerCamera.transform.forward, out hit, reach, layers, QueryTriggerInteraction.Ignore);
         }
 
         private static OreDeposit GetDeposit(Collider collider)
@@ -198,11 +206,23 @@ namespace ToxicDepths.Mining
             return ore != null && ore.isActiveAndEnabled && !ore.IsDepleted ? ore : null;
         }
 
-        private OreChunk FindPickup()
+        private static OreChunk GetPickup(Collider collider)
         {
-            if (!TryAim(out RaycastHit hit)) return null;
-            var chunk = hit.collider.GetComponentInParent<OreChunk>();
+            var chunk = collider != null ? collider.GetComponentInParent<OreChunk>() : null;
             return chunk != null && chunk.isActiveAndEnabled && !chunk.IsHeld ? chunk : null;
+        }
+
+        private bool TryGreet(Collider collider)
+        {
+            if (collider != null && collider.gameObject.layer == shopCounterLayer)
+            {
+                int greetingLayers = hitLayers.value & ~(1 << shopCounterLayer);
+                if (!TryAimOnLayers(greetingLayers, out var greetingHit)) return false;
+                collider = greetingHit.collider;
+            }
+
+            var frog = collider != null ? collider.GetComponentInParent<FrogGreeting>() : null;
+            return frog != null && frog.isActiveAndEnabled && frog.Show(playerCamera, movement);
         }
 
         private void SetOutlinedOre(OreChunk chunk)
@@ -317,8 +337,32 @@ namespace ToxicDepths.Mining
 
             if (carrying && carryLayer >= 0) heldOre.SetViewLayer(carryLayer);
             if (carryGrip != null) carryGrip.gameObject.SetActive(carrying);
+            RefreshCarryModelVisibility();
             UpdateCarryCamera();
             UpdatePickaxeVisibility();
+        }
+
+        internal void RefreshHeldItemVisibility()
+        {
+            UpdatePickaxeVisibility();
+            RefreshCarryModelVisibility();
+            RefreshOutputView();
+        }
+
+        private void RefreshCarryModelVisibility()
+        {
+            if (!IsCarryingOre) return;
+
+            bool visible = HeldItemsVisible;
+            heldOre.SetHeldModelVisible(visible);
+            if (leftHand != null) leftHand.gameObject.SetActive(visible);
+            if (rightHand != null) rightHand.gameObject.SetActive(visible);
+        }
+
+        private void RefreshOutputView()
+        {
+            SetOutputView(HeldItemsVisible && !IsCarryingOre && playerCamera != null && shop != null
+                ? shop.SelectedOutput : null);
         }
 
         private void SetOutputView(Rigidbody output)
@@ -410,7 +454,7 @@ namespace ToxicDepths.Mining
         private void UpdatePickaxeVisibility()
         {
             if (heldPickaxe != null)
-                heldPickaxe.gameObject.SetActive(movement.isActiveAndEnabled && ShouldShowPickaxe);
+                heldPickaxe.gameObject.SetActive(HeldItemsVisible && ShouldShowPickaxe);
         }
 
         private void OnHotbarSelectionChanged(int index)
