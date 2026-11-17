@@ -27,6 +27,8 @@ namespace ToxicDepths.UI
         [SerializeField] private UnityEvent<int> onSelectionChanged = new UnityEvent<int>();
 
         public int SelectedIndex => selectedIndex;
+        public bool SelectionLocked { get; private set; }
+        private Sprite carriedIcon;
         public UnityEvent<int> OnSelectionChanged => onSelectionChanged;
 
         private void OnEnable()
@@ -38,7 +40,7 @@ namespace ToxicDepths.UI
         private void Update()
         {
             // Same control state as the FPS player: no selection while paused or in a menu.
-            if (!Application.isFocused || Time.timeScale <= 0f ||
+            if (SelectionLocked || !Application.isFocused || Time.timeScale <= 0f ||
                 Cursor.lockState != CursorLockMode.Locked) return;
 
             Keyboard keyboard = Keyboard.current;
@@ -60,7 +62,7 @@ namespace ToxicDepths.UI
 
         public void SelectSlot(int index)
         {
-            if (index < 0 || index >= SlotCount || index == selectedIndex) return;
+            if (SelectionLocked || index < 0 || index >= SlotCount || index == selectedIndex) return;
             selectedIndex = index;
             Refresh(false);
             onSelectionChanged.Invoke(selectedIndex);
@@ -75,12 +77,21 @@ namespace ToxicDepths.UI
             Refresh(false);
         }
 
+        public void SetCarriedItem(Sprite icon, bool carrying)
+        {
+            SelectionLocked = carrying;
+            carriedIcon = icon;
+            Refresh(false);
+        }
+
         private void Refresh(bool immediate)
         {
             for (int i = 0; i < SlotCount; i++)
             {
                 if (slotViews[i] == null) continue;
-                slotViews[i].SetContent(i + 1, slots[i].icon, slots[i].count);
+                bool carried = SelectionLocked && i == selectedIndex;
+                slotViews[i].SetContent(i + 1, carried ? carriedIcon : slots[i].icon,
+                    carried ? 1 : slots[i].count);
                 slotViews[i].SetSelected(i == selectedIndex, immediate);
             }
         }

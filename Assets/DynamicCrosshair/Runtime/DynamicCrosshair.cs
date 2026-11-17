@@ -23,6 +23,10 @@ namespace ToxicDepths.UI
         [Tooltip("Dauer fuer die Vorschau bzw. PlaySwing ohne Zeitangabe.")]
         [SerializeField, Min(0.01f)] private float defaultSwingDuration = 0.7f;
 
+        [Header("Wurf aufladen")]
+        [SerializeField, Range(0.1f, 1f)] private float throwStartScale = 0.45f;
+        [SerializeField, Min(1f)] private float throwMaxScale = 2f;
+
         private float currentScale = 1f;
         private float elapsed;
         private float swingDuration;
@@ -79,6 +83,13 @@ namespace ToxicDepths.UI
         {
             playingTimedSwing = false;
             currentScale = 1f;
+            SetVerticesDirty();
+        }
+
+        public void SetThrowCharge(float charge)
+        {
+            playingTimedSwing = false;
+            currentScale = Mathf.Lerp(throwStartScale, throwMaxScale, Mathf.Clamp01(charge));
             SetVerticesDirty();
         }
 

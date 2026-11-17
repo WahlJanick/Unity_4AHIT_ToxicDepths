@@ -21,7 +21,6 @@ namespace ToxicDepths
         private PlayerMovement movement;
         private PlayerMining mining;
         private ShredderPlacement placement;
-        private Shredder viewedMachine;
         private Rigidbody emeraldOutput;
         private Rigidbody stoneOutput;
         private bool isOpen;
@@ -81,7 +80,6 @@ namespace ToxicDepths
                 return;
             }
 
-            viewedMachine = null;
             if (!movement.CanUseTools) return;
             if (keyboard != null && keyboard.bKey.wasPressedThisFrame)
             {
@@ -90,23 +88,44 @@ namespace ToxicDepths
             }
 
             if (!mining.TryAim(out RaycastHit hit)) return;
-            viewedMachine = hit.collider.GetComponentInChildren<Shredder>();
-            if (keyboard == null || !keyboard.eKey.wasPressedThisFrame || mining.IsCarryingOre)
+            if (keyboard == null || !keyboard.eKey.wasPressedThisFrame || mining.IsCarryingOre || mining.InteractionUsedThisFrame)
                 return;
 
             var body = hit.collider.attachedRigidbody;
-            if (body == null || !body.TryGetComponent(out ShredderOutputPickup pickup) || !pickup.TryCollect())
+            if (body == null || !body.TryGetComponent(out ShredderOutputPickup pickup))
                 return;
 
+            TryCollect(pickup);
+        }
+
+        internal bool TryCollect(ShredderOutputPickup pickup)
+        {
+            if (pickup == null || mining.IsCarryingOre || !pickup.TryCollect()) return false;
+            mining.MarkInteractionUsed();
             if (pickup.ItemKind == ShredderOutputPickup.Kind.Emerald) emeralds++;
             else stones++;
             RefreshOutputSlots();
+            return true;
+        }
+
+        internal bool TryThrowSelected(float speed, float charge)
+        {
+            var output = SelectedOutput;
+            var camera = mining.ViewCamera;
+            if (output == null || camera == null || !output.TryGetComponent(out BoxCollider box) ||
+                !ItemDropPhysics.TryGetPose(camera, new Bounds(box.center, box.size), out Pose pose)) return false;
+
+            var item = Instantiate(output, pose.position, pose.rotation);
+            ItemDropPhysics.Launch(item, camera, speed, charge);
+            if (placement.Hotbar.SelectedIndex == EmeraldSlot) emeralds--;
+            else stones--;
+            RefreshOutputSlots();
+            return true;
         }
 
         private void SetOpen(bool open)
         {
             isOpen = open;
-            viewedMachine = null;
             purchaseMessage = null;
             movement.SetShopOpen(open);
         }
@@ -137,7 +156,7 @@ namespace ToxicDepths
         private void OnGUI()
         {
             if (Event.current.type != EventType.Repaint) return;
-            if (!isOpen && viewedMachine == null) return;
+            if (!isOpen) return;
 
             if (heading == null)
             {
@@ -149,27 +168,7 @@ namespace ToxicDepths
                 hint.normal.textColor = new Color(0.75f, 0.82f, 0.84f);
             }
 
-            if (isOpen) DrawShop();
-            else DrawProgress(viewedMachine);
-        }
-
-        private void DrawProgress(Shredder machine)
-        {
-            var panel = new Rect(Screen.width * 0.5f - 143f, Screen.height * 0.5f + 35f, 286f, 75f);
-            DrawRect(panel, Panel);
-            var model = Shredder.Models[machine.ModelIndex];
-            GUI.Label(new Rect(panel.x + 12f, panel.y + 5f, 262f, 26f),
-                $"Zerschredderer · {model.Name}", heading);
-
-            float progress = machine.Progress;
-            string status = machine.IsProcessing
-                ? $"{Mathf.FloorToInt(progress * 100f)} % · {machine.SecondsRemaining:0.0} s"
-                : "Bereit";
-            GUI.Label(new Rect(panel.x + 12f, panel.y + 30f, 262f, 24f), status, line);
-            var bar = new Rect(panel.x + 13f, panel.y + 59f, 260f, 5f);
-            DrawRect(bar, new Color(0.17f, 0.24f, 0.25f));
-            bar.width *= progress;
-            DrawRect(bar, Accent);
+            DrawShop();
         }
 
         private void DrawShop()
@@ -186,7 +185,7 @@ namespace ToxicDepths
                 float y = panel.y + 80f + (i - 1) * 51f;
                 DrawRect(new Rect(panel.x + 18f, y, 404f, 43f), new Color(0.09f, 0.14f, 0.15f));
                 GUI.Label(new Rect(panel.x + 28f, y + 7f, 382f, 29f),
-                    $"[{i + 1}]  {item.Name}     {item.Seconds:0.0} s     {item.Price} Smaragde", line);
+                    $"[{i + 1}]  {item.Name}     {1f / item.DurationMultiplier:0.#}x Tempo     {item.Price} Smaragde", line);
             }
 
             if (!string.IsNullOrEmpty(purchaseMessage))
@@ -207,7 +206,6 @@ namespace ToxicDepths
         private void OnDisable()
         {
             if (isOpen) SetOpen(false);
-            viewedMachine = null;
         }
     }
 }

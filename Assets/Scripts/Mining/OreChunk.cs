@@ -20,6 +20,8 @@ namespace ToxicDepths.Mining
         private bool wasThrown;
 
         public bool IsHeld { get; private set; }
+        public float ShredderSeconds { get; private set; } = 6f;
+        public Sprite HotbarIcon { get; private set; }
         public Vector3 Size => hitbox.size;
 
         internal static void Spawn(OreDeposit deposit)
@@ -61,6 +63,8 @@ namespace ToxicDepths.Mining
             root.layer = deposit.gameObject.layer;
 
             var chunk = root.AddComponent<OreChunk>();
+            chunk.ShredderSeconds = deposit.ShredderSeconds;
+            chunk.HotbarIcon = deposit.HotbarIcon;
             chunk.visuals = root.GetComponentsInChildren<MeshRenderer>();
             chunk.ConfigureHeldVisualPose(deposit);
             chunk.hitbox = root.GetComponent<BoxCollider>();
