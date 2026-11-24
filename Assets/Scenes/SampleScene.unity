@@ -1251,7 +1251,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ToxicDepths.Mining.OreDeposit
   oreName: Smaragd
+  hotbarIcon: {fileID: 21300000, guid: 2282f0bafc2e442f87af839c879b004a, type: 3}
   hitsToBreak: 4
+  shredderSeconds: 6
   onDepleted:
     m_PersistentCalls:
       m_Calls: []
@@ -1496,6 +1498,7 @@ GameObject:
   - component: {fileID: 9000000006}
   - component: {fileID: 9000000007}
   - component: {fileID: 9000000008}
+  - component: {fileID: 9000000009}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1606,6 +1609,9 @@ MonoBehaviour:
   crosshair: {fileID: 1519754469}
   carryHand: {fileID: 1980110165}
   oreOutlineMaterial: {fileID: 2100000, guid: 60d6a136f791417e88ad49d7dba1d23a, type: 2}
+  fallbackOreIcon: {fileID: 21300000, guid: 2282f0bafc2e442f87af839c879b004a, type: 3}
+  pickaxeIcon: {fileID: 21300000, guid: 2f8b8cbd2bfdcf14583467e63d265964, type: 3}
+  droppedPickaxePrefab: {fileID: 4577463078663582906, guid: be56e0177d7a44ca81ab518dd46cb91d, type: 3}
   reach: 3
   damagePerHit: 1
   staminaPerSwing: 12
@@ -1640,6 +1646,7 @@ MonoBehaviour:
   shredderIcon: {fileID: 21300000, guid: 948d7f25860543142b24f64d283f7601, type: 3}
   previewMaterial: {fileID: 2100000, guid: c48f7e8c1309b314a956668b6703971f, type: 2}
   placementReach: 4
+  maximumSlope: 35
   placementLayers:
     serializedVersion: 2
     m_Bits: 4294967291
@@ -1658,6 +1665,19 @@ MonoBehaviour:
   startingEmeralds: 6
   emeraldIcon: {fileID: 21300000, guid: 539017c13f8dbc7439576dd331631745, type: 3}
   stoneIcon: {fileID: 21300000, guid: e613e98da5faf2a4fb1a9fb2ba52f52c, type: 3}
+--- !u!114 &9000000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b35a9ea86d3c49b2bff5fa91094c6a08, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ToxicDepths.PlayerItemThrower
+  rotationTapTime: 0.22
 --- !u!4 &9000000200 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8691526643756282688, guid: 997e3642c5fa9a44da5d340e806427ca, type: 3}
@@ -1973,6 +1993,23 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 58c197e4e1cf43aaaf132915f51490eb, type: 3}
+--- !u!1001 &9000000900
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 114002, guid: 3585c38f693641428450273baf6dca6a, type: 3}
+      propertyPath: playerMining
+      value:
+      objectReference: {fileID: 9000000006}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3585c38f693641428450273baf6dca6a, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1984,6 +2021,7 @@ SceneRoots:
   - {fileID: 9000000500}
   - {fileID: 9000000600}
   - {fileID: 9000000800}
+  - {fileID: 9000000900}
   - {fileID: 1530115347}
   - {fileID: 1481599466}
   - {fileID: 273652612}

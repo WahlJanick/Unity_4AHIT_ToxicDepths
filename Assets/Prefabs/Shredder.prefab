@@ -157,7 +157,8 @@ MonoBehaviour:
   animatedModel: {fileID: 5100156054207266186}
   emeraldPrefab: {fileID: 3796081055481163600, guid: 17c29bf39159c484eac348cb91c6b2c7, type: 3}
   stonePrefab: {fileID: 3464308987326434166, guid: c92129f2734b964468266dadd5a5ef5f, type: 3}
-  processingTime: 4
+  hitsToDismantle: 3
+  isPacked: 0
 --- !u!1001 &4705660820521589345
 PrefabInstance:
   m_ObjectHideFlags: 0

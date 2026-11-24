@@ -8,8 +8,13 @@ namespace ToxicDepths.Mining
     public sealed class OreDeposit : MonoBehaviour
     {
         [SerializeField] private string oreName = "Smaragd";
+        [SerializeField] private Sprite hotbarIcon;
         [SerializeField, Min(1)] private int hitsToBreak = 4;
         [SerializeField] private UnityEvent onDepleted = new UnityEvent();
+
+        [Header("Verarbeitung")]
+        [Tooltip("Dauer pro Erzstueck im Standard-Shredder. Schnellere Modelle reduzieren diese Zeit.")]
+        [SerializeField, Min(0.1f)] private float shredderSeconds = 6f;
 
         [Header("Trageansicht")]
         [SerializeField] private bool overrideHeldMeshPose;
@@ -21,6 +26,8 @@ namespace ToxicDepths.Mining
         private Quaternion restRotation;
 
         public string OreName => oreName;
+        public Sprite HotbarIcon => hotbarIcon;
+        public float ShredderSeconds => Mathf.Max(0.1f, shredderSeconds);
         public int RemainingHits => Mathf.Max(0, hitsToBreak - hitsTaken);
         public bool IsDepleted => RemainingHits == 0;
 

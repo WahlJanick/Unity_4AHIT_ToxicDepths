@@ -21,6 +21,9 @@ namespace ToxicDepths.Mining
         [SerializeField] private DynamicCrosshair crosshair;
         [SerializeField] private MeshFilter carryHand;
         [SerializeField] private Material oreOutlineMaterial;
+        [SerializeField] private Sprite fallbackOreIcon;
+        [SerializeField] private Sprite pickaxeIcon;
+        [SerializeField] private GameObject droppedPickaxePrefab;
 
         [Header("Abbauen")]
         [SerializeField, Min(0.1f)] private float reach = 3f;
@@ -47,6 +50,7 @@ namespace ToxicDepths.Mining
         private PlayerVitals vitals;
         private PlayerMovement movement;
         private ShredderShop shop;
+        private ShredderPlacement placement;
         private Rigidbody displayedOutput;
         private Transform outputGrip;
         private Transform outputHand;
@@ -54,6 +58,7 @@ namespace ToxicDepths.Mining
         private MeshRenderer outputRenderer;
         private OreChunk heldOre;
         private OreChunk outlinedOre;
+        private Shredder outlinedShredder;
         private Transform carryGrip;
         private Camera carryCamera;
         private int carryLayer = -1;
@@ -67,11 +72,19 @@ namespace ToxicDepths.Mining
         private bool impactApplied;
         private float swingElapsed;
         private float retryAt;
-        private float throwChargeStartedAt = -1f;
+        private bool hasPickaxe = true;
+        private int interactionFrame = -1;
 
         public bool IsSwinging { get; private set; }
         public bool IsCarryingOre => heldOre != null;
-        internal bool ShouldShowPickaxe => !IsCarryingOre &&
+        public bool HasPickaxe => hasPickaxe;
+        internal Camera ViewCamera => playerCamera;
+        internal DynamicCrosshair AimCrosshair => crosshair;
+        internal float ThrowChargeTime => throwChargeTime;
+        internal bool InteractionUsedThisFrame => interactionFrame == Time.frameCount;
+        internal void MarkInteractionUsed() => interactionFrame = Time.frameCount;
+        internal float GetThrowSpeed(float charge) => Mathf.Lerp(tapThrowSpeed, chargedThrowSpeed, Mathf.Clamp01(charge));
+        internal bool ShouldShowPickaxe => hasPickaxe && !IsCarryingOre &&
             (hotbar == null || hotbar.SelectedIndex == PickaxeSlot);
         public float SwingProgress => IsSwinging ? Mathf.Clamp01(swingElapsed / swingDuration) : 0f;
         private bool CanInteract => isActiveAndEnabled && movement != null && movement.CanUseTools &&
@@ -83,7 +96,13 @@ namespace ToxicDepths.Mining
             vitals = GetComponent<PlayerVitals>();
             movement = GetComponent<PlayerMovement>();
             TryGetComponent(out shop);
+            TryGetComponent(out placement);
             if (playerCamera == null) playerCamera = GetComponentInChildren<Camera>();
+        }
+
+        private void Start()
+        {
+            if (hotbar != null && pickaxeIcon != null) hotbar.SetSlot(PickaxeSlot, pickaxeIcon, hasPickaxe ? 1 : 0);
         }
 
         private void OnEnable()
@@ -110,24 +129,31 @@ namespace ToxicDepths.Mining
 
             if (!CanInteract)
             {
-                SetOutlinedOre(null);
+                ClearPickupOutlines();
                 holdToMine = false;
-                throwChargeStartedAt = -1f;
                 CancelSwing();
                 return;
             }
 
             var keyboard = Keyboard.current;
-            if (IsCarryingOre)
-            {
-                UpdateThrowCharge(keyboard);
-                return;
-            }
+            if (IsCarryingOre) { ClearPickupOutlines(); return; }
 
-            var pickup = FindPickup();
-            SetOutlinedOre(pickup);
+            var pickup = UpdatePickupOutlines();
             if (pickup != null && keyboard != null && keyboard.eKey.wasPressedThisFrame && TryPickUp(pickup))
                 return;
+
+            if (pickup == null && keyboard != null && keyboard.eKey.wasPressedThisFrame && TryAim(out RaycastHit itemHit))
+            {
+                var tool = itemHit.collider.GetComponentInParent<PickaxePickup>();
+                if (tool != null && tool.TryCollect(this)) return;
+            }
+
+            if (keyboard != null && keyboard.qKey.isPressed)
+            {
+                holdToMine = false;
+                CancelSwing();
+                return;
+            }
 
             if (!CanControlTool()) return;
             var mouse = Mouse.current;
@@ -174,7 +200,7 @@ namespace ToxicDepths.Mining
             {
                 impactApplied = true;
                 // Resolve the nearest surface now: moving away or aiming behind a wall cannot hit.
-                FindTarget()?.ApplyHit(damagePerHit);
+                ApplyAimedHit();
             }
 
             if (progress >= 1f) CancelSwing();
@@ -185,11 +211,38 @@ namespace ToxicDepths.Mining
             return TryAim(out RaycastHit hit) ? GetDeposit(hit.collider) : null;
         }
 
+        private void ApplyAimedHit()
+        {
+            if (!TryAim(out RaycastHit hit)) return;
+            var deposit = GetDeposit(hit.collider);
+            if (deposit != null)
+            {
+                deposit.ApplyHit(damagePerHit);
+                return;
+            }
+            var machine = Shredder.Find(hit.collider);
+            if (machine != null) machine.ApplyPickaxeHit(damagePerHit);
+        }
+
         internal bool TryAim(out RaycastHit hit)
         {
             hit = default;
             return playerCamera != null && Physics.Raycast(playerCamera.transform.position,
                 playerCamera.transform.forward, out hit, reach, hitLayers, QueryTriggerInteraction.Ignore);
+        }
+
+        internal bool CanPickUpTarget(Collider collider)
+        {
+            if (IsCarryingOre || collider == null) return false;
+            var ore = collider.GetComponentInParent<OreChunk>();
+            if (ore != null && ore.isActiveAndEnabled && !ore.IsHeld) return true;
+            var tool = collider.GetComponentInParent<PickaxePickup>();
+            if (tool != null && tool.CanCollect(this)) return true;
+            var body = collider.attachedRigidbody;
+            if (shop != null && body != null && body.TryGetComponent(out ShredderOutputPickup output) && output.isActiveAndEnabled)
+                return true;
+            var machine = Shredder.Find(collider);
+            return placement != null && placement.CanStoreShredder && machine != null && machine.CanPickUp;
         }
 
         private static OreDeposit GetDeposit(Collider collider)
@@ -198,11 +251,37 @@ namespace ToxicDepths.Mining
             return ore != null && ore.isActiveAndEnabled && !ore.IsDepleted ? ore : null;
         }
 
-        private OreChunk FindPickup()
+        private OreChunk UpdatePickupOutlines()
         {
-            if (!TryAim(out RaycastHit hit)) return null;
-            var chunk = hit.collider.GetComponentInParent<OreChunk>();
-            return chunk != null && chunk.isActiveAndEnabled && !chunk.IsHeld ? chunk : null;
+            OreChunk chunk = null;
+            Shredder machine = null;
+            if (TryAim(out RaycastHit hit))
+            {
+                var candidate = hit.collider.GetComponentInParent<OreChunk>();
+                if (candidate != null && candidate.isActiveAndEnabled && !candidate.IsHeld) chunk = candidate;
+                if (chunk == null && placement != null && placement.CanStoreShredder)
+                {
+                    var target = Shredder.Find(hit.collider);
+                    if (target != null && target.CanPickUp) machine = target;
+                }
+            }
+            SetOutlinedOre(chunk);
+            SetOutlinedShredder(machine);
+            return chunk;
+        }
+
+        private void SetOutlinedShredder(Shredder machine)
+        {
+            if (outlinedShredder == machine) return;
+            if (outlinedShredder != null) outlinedShredder.SetOutline(null);
+            outlinedShredder = machine;
+            if (outlinedShredder != null) outlinedShredder.SetOutline(oreOutlineMaterial);
+        }
+
+        private void ClearPickupOutlines()
+        {
+            SetOutlinedOre(null);
+            SetOutlinedShredder(null);
         }
 
         private void SetOutlinedOre(OreChunk chunk)
@@ -216,8 +295,10 @@ namespace ToxicDepths.Mining
         private bool TryPickUp(OreChunk chunk)
         {
             if (IsCarryingOre || !chunk.TryPickUp()) return false;
-            SetOutlinedOre(null);
+            ClearPickupOutlines();
             heldOre = chunk;
+            MarkInteractionUsed();
+            if (hotbar != null) hotbar.SetCarriedItem(chunk.HotbarIcon != null ? chunk.HotbarIcon : fallbackOreIcon, true);
             holdToMine = false;
             CancelSwing();
             vitals.StopSprint();
@@ -226,40 +307,53 @@ namespace ToxicDepths.Mining
             return true;
         }
 
-        private void UpdateThrowCharge(Keyboard keyboard)
+        internal bool TryThrowHeldOre(float charge)
         {
-            if (keyboard == null)
-            {
-                throwChargeStartedAt = -1f;
-                return;
-            }
-
-            var throwKey = keyboard.qKey;
-            if (throwKey.wasPressedThisFrame) throwChargeStartedAt = Time.time;
-            if (throwChargeStartedAt < 0f || throwKey.isPressed) return;
-
-            float charge = Mathf.Clamp01((Time.time - throwChargeStartedAt) / throwChargeTime);
-            throwChargeStartedAt = -1f;
-            if (throwKey.wasReleasedThisFrame) ThrowHeldOre(charge);
-        }
-
-        private void ThrowHeldOre(float charge)
-        {
+            if (!IsCarryingOre || playerCamera == null) return false;
             var cameraTransform = playerCamera.transform;
-            var shredder = TryAim(out RaycastHit hit) ? hit.collider.GetComponentInChildren<Shredder>() : null;
-            bool fed = shredder != null && shredder.CanAcceptOre &&
+            var shredder = TryAim(out RaycastHit hit) ? Shredder.Find(hit.collider) : null;
+            bool fed = charge < 0.15f && shredder != null && shredder.CanAcceptOre &&
                 heldOre.TryThrowInto(cameraTransform.position, shredder.transform.position);
-            if (!fed && !TryThrowNormally(cameraTransform, charge)) return;
+            if (!fed && !TryThrowNormally(cameraTransform, charge)) return false;
 
             heldOre = null;
+            if (hotbar != null) hotbar.SetCarriedItem(null, false);
             SetCarryView(false);
+            return true;
+        }
+
+        internal bool TryDropPickaxe(float charge)
+        {
+            if (!hasPickaxe || IsCarryingOre || droppedPickaxePrefab == null || playerCamera == null) return false;
+            var box = droppedPickaxePrefab.GetComponent<BoxCollider>();
+            if (box == null || !ItemDropPhysics.TryGetPose(playerCamera, new Bounds(box.center, box.size), out Pose pose)) return false;
+            var item = Instantiate(droppedPickaxePrefab, pose.position, pose.rotation);
+            ItemDropPhysics.Launch(item.GetComponent<Rigidbody>(), playerCamera, GetThrowSpeed(charge), charge);
+            hasPickaxe = false;
+            holdToMine = false;
+            CancelSwing();
+            if (hotbar != null) hotbar.SetSlot(PickaxeSlot, pickaxeIcon, 0);
+            UpdatePickaxeVisibility();
+            return true;
+        }
+
+        internal bool GivePickaxe()
+        {
+            if (hasPickaxe || IsCarryingOre) return false;
+            hasPickaxe = true;
+            MarkInteractionUsed();
+            if (hotbar != null)
+            {
+                hotbar.SetSlot(PickaxeSlot, pickaxeIcon, 1);
+                hotbar.SelectSlot(PickaxeSlot);
+            }
+            UpdatePickaxeVisibility();
+            return true;
         }
 
         private bool TryThrowNormally(Transform cameraTransform, float charge)
         {
-            float speed = Mathf.Lerp(tapThrowSpeed, chargedThrowSpeed, charge);
-            Vector3 velocity = cameraTransform.forward * speed;
-            velocity.y = Mathf.Max(velocity.y + 0.8f, Mathf.Lerp(1f, 2f, charge));
+            Vector3 velocity = ItemDropPhysics.Velocity(playerCamera, GetThrowSpeed(charge), charge);
             if (heldOre.TryThrow(cameraTransform.position, carryGrip.position, carryGrip.rotation, velocity))
                 return true;
 
@@ -272,12 +366,13 @@ namespace ToxicDepths.Mining
 
         private void ReturnHeldOre()
         {
-            throwChargeStartedAt = -1f;
             if (IsCarryingOre)
             {
                 heldOre.ReturnToPickupSpot();
                 heldOre = null;
             }
+
+            if (hotbar != null) hotbar.SetCarriedItem(null, false);
 
             if (carryGrip != null && carryGrip.gameObject.activeSelf) SetCarryView(false);
         }
@@ -505,7 +600,7 @@ namespace ToxicDepths.Mining
         private void OnDisable()
         {
             if (hotbar != null) hotbar.OnSelectionChanged.RemoveListener(OnHotbarSelectionChanged);
-            SetOutlinedOre(null);
+            ClearPickupOutlines();
             holdToMine = false;
             CancelSwing();
             ReturnHeldOre();

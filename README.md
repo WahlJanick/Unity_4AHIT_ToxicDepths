@@ -22,7 +22,7 @@ Die wichtigsten Spielmechaniken umfassen:
 - **Erzabbau:** Unterschiedliche Erze mit individuellen Eigenschaften und Werten.
 - **Ressourcenmanagement:** Energie und Stamina müssen während der Erkundung sinnvoll eingesetzt werden.
 - **Handelssystem:** Interaktion mit einem NPC zum Kaufen und Verkaufen von Gegenständen.
-- **Inventar und Hotbar:** Verwaltung und Nutzung von Items über eine Hotbar mit vier Slots.
+- **Inventar und Hotbar:** Verwaltung und Nutzung von Items über eine Hotbar mit sechs Slots.
 - **Quotensystem:** Sammeln ausreichend wertvoller Ressourcen, um die Mine verlassen zu dürfen.
 
 Das HUD informiert den Spieler über wichtige Werte wie Energie, Stamina, Geld und den aktuellen Quotenfortschritt. Ein dynamisches Fadenkreuz unterstützt die Interaktion mit der Spielwelt.
@@ -36,6 +36,28 @@ Beim Sprinten wird Stamina verbraucht, die sich nach einer kurzen Pause automati
 Je weniger Energie vorhanden ist, desto geringer fällt die maximale Staminakapazität aus. Energie regeneriert sich nicht automatisch, sondern muss beispielsweise durch kaufbare Verbrauchsitems wiederhergestellt werden.
 
 Die Umsetzung erfolgt über **C#-Skripte**, die Spielerbewegung, Ressourcenwerte und deren Darstellung im HUD steuern. Die wichtigsten Werte sind konfigurierbar, damit das Gameplay während der Entwicklung angepasst und ausbalanciert werden kann.
+
+### Interaktion und Erzverarbeitung
+
+Der E-Hinweis sitzt auf dem anvisierten, aufhebbaren Gegenstand. Der Shredder zeigt beim Anvisieren einer laufenden Maschine nur einen Fortschrittsbalken.
+
+Getragenes Erz wird im ausgewählten Hotbar-Slot angezeigt und sperrt bis zum Ablegen den Wechsel per Zahlentaste oder Mausrad. Der vorherige Slotinhalt bleibt erhalten.
+
+| Eingabe | Aktion |
+| --- | --- |
+| E auf einem Item | Erz, Materialien, Spitzhacke oder einen abgebauten/abgeworfenen Shredder aufheben |
+| Linke Maustaste mit Spitzhacke auf einem Shredder | Shredder mit drei Treffern abbauen |
+| Shredder auswählen | Rot/grüne Platzierungsvorschau sofort anzeigen |
+| E / kurz Q mit ausgewähltem Shredder | Vorschau um 45° nach rechts / links drehen |
+| Rechte Maustaste | Shredder an einer gültigen Position abstellen |
+| Q halten und loslassen | Ausgewähltes Item werfen; nach 1,25 Sekunden ist die maximale Stärke erreicht |
+| Kurz Q bei Erz, Materialien oder Spitzhacke | Mit geringer Kraft ablegen/werfen |
+
+Das Fadenkreuz bewegt sich beim Aufladen von innen nach außen. Auch abgeworfene Spitzhacken und Shredder lassen sich mit E wieder aufnehmen. Aufgestellte Shredder müssen nach Verarbeitung und Ausgabe zuerst mit der Spitzhacke abgebaut werden. Treffer lassen das Modell wie ein Erzvorkommen kurz wackeln. Danach erscheinen sie als Pickup in Originalgröße mit E-Hinweis und landen beim Aufheben wieder in ihrem Modell-Slot. Dabei bleibt der Hotbar-Wechsel erlaubt. Die benötigten Treffer lassen sich am Shredder unter **Abbauen / Hits To Dismantle** einstellen.
+
+Auf ebenen Schrägen richtet sich der Shredder an der Flächennormale aus. Alle vier Ecken müssen auf derselben Ebene unterstützt werden; die maximale Neigung beträgt standardmäßig 35° und ist unter **Maximum Slope** einstellbar.
+
+Die Dauer eines Shredder-Zyklus wird am jeweiligen `OreDeposit` im Inspector unter **Verarbeitung / Shredder Seconds** eingestellt und beim Abbau an das Erzstück weitergegeben. Smaragderz benötigt im Standardmodell 6 Sekunden, im schnellen Modell 2,7 Sekunden und im Turbomodell 1,35 Sekunden. Jedes eingeworfene Stück behält seine eigene Dauer in der Warteschlange.
 
 ## Geldanzeige (CurrencyCount)
 
