@@ -1499,6 +1499,7 @@ GameObject:
   - component: {fileID: 9000000007}
   - component: {fileID: 9000000008}
   - component: {fileID: 9000000009}
+  - component: {fileID: 9000000010}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1678,6 +1679,36 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ToxicDepths.PlayerItemThrower
   rotationTapTime: 0.22
+--- !u!114 &9000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1c9abc461604725997df15424ddc912, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ToxicDepths.IndustrialScanner
+  hotbar: {fileID: 9000000703}
+  playerCamera: {fileID: 330585545}
+  scannerModel: {fileID: 919132149155446097, guid: 22e0d001c8594c0899dff4d71af4a38e, type: 3}
+  rightHand: {fileID: 1980110164}
+  scanRange: 5
+  scanDuration: 1.5
+  aimAssistAngle: 6
+  scanLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  wireframeMaterial: {fileID: 2100000, guid: 874319694fdb4505b32a6e01307cc4ce, type: 2}
+  beamMaterial: {fileID: 2100000, guid: cb5682cb0e844d45bcd0ea8547eed3f4, type: 2}
+  oreTypeIcon: {fileID: 2800000, guid: 72bca99913f9f5f4a860528b7f77cce8, type: 3}
+  poisonIcon: {fileID: 2800000, guid: 68f988b1d46657d4fa7c0e623e6518b5, type: 3}
+  scanStart: {fileID: 0}
+  scanLoop: {fileID: 0}
+  scanComplete: {fileID: 0}
+  scanCancelled: {fileID: 0}
 --- !u!4 &9000000200 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8691526643756282688, guid: 997e3642c5fa9a44da5d340e806427ca, type: 3}
@@ -2010,6 +2041,64 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3585c38f693641428450273baf6dca6a, type: 3}
+--- !u!1001 &9000001000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 7.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_Name
+      value: Poisonous_Emerald_Crystal_Cluster
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+--- !u!1001 &9000001100
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -7.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
+      propertyPath: m_Name
+      value: Poisonous_Emerald_Crystal_Cluster (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c019727746fa439ebed4a85d9cc0adac, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2029,3 +2118,5 @@ SceneRoots:
   - {fileID: 1824389192}
   - {fileID: 174506270}
   - {fileID: 1213542054}
+  - {fileID: 9000001000}
+  - {fileID: 9000001100}

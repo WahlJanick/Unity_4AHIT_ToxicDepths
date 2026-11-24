@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using ToxicDepths;
 using ToxicDepths.Mining;
+using ToxicDepths.UI;
 
 [RequireComponent(typeof(CharacterController), typeof(PlayerVitals))]
 [DisallowMultipleComponent]
@@ -178,6 +179,14 @@ public class PlayerMovement : MonoBehaviour
         SetCursorLocked(!open && !controlsPaused && isActiveAndEnabled && Application.isFocused);
     }
 
+    internal void Collapse()
+    {
+        enabled = false;
+        if (mining != null) mining.enabled = false;
+        if (TryGetComponent(out ShredderShop shop)) shop.enabled = false;
+        gameObject.AddComponent<PlayerDefeat>().Begin(playerCamera, controller);
+    }
+
     private void Update()
     {
         if (shopOpen)
@@ -247,6 +256,7 @@ public class PlayerMovement : MonoBehaviour
         bool wantsToSprint = controlsActive && input.sqrMagnitude > 0.01f && sprintAction.IsPressed() &&
             (mining == null || !mining.IsCarryingOre);
         float sprintFraction = vitals.UpdateSprint(wantsToSprint, Time.deltaTime);
+        if (vitals.IsDefeated) return;
         float speed = Mathf.Lerp(moveSpeed, Mathf.Max(moveSpeed, sprintSpeed), sprintFraction);
         Vector3 velocity = (right * input.x + forward * input.y) * speed;
 

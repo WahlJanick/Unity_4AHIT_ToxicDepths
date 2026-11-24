@@ -34,11 +34,12 @@ namespace ToxicDepths
 
         internal int ModelIndex { get; private set; }
         internal GameObject Root => outlet != null && outlet.parent != null ? outlet.parent.gameObject : gameObject;
-        private bool IsIdle => !IsProcessing && emeraldsToEject + stonesToEject == 0;
+        private bool HasOutput => emeraldsToEject + stonesToEject > 0;
+        private bool IsIdle => !IsProcessing && !HasOutput && pendingBatches.Count == 0;
         internal bool CanPickUp => isPacked && isActiveAndEnabled && IsIdle;
         internal bool CanAcceptOre => !isPacked && isActiveAndEnabled && outlet != null && emeraldPrefab != null && stonePrefab != null &&
             (!Root.TryGetComponent(out Rigidbody body) || body.isKinematic);
-        internal bool IsProcessing => pendingBatches.Count > 0;
+        internal bool IsProcessing => currentCycleSeconds > 0f;
         internal float SecondsRemaining => IsProcessing ? Mathf.Max(0f, readyAt - Time.time) : 0f;
         internal float Progress => IsProcessing && currentCycleSeconds > 0f
             ? Mathf.Clamp01(1f - SecondsRemaining / currentCycleSeconds)
@@ -151,13 +152,13 @@ namespace ToxicDepths
         {
             float duration = Mathf.Max(0.1f, standardSeconds) * Models[ModelIndex].DurationMultiplier;
             pendingBatches.Enqueue(duration);
-            if (pendingBatches.Count == 1) StartNextCycle();
+            if (!IsProcessing && !HasOutput) StartNextCycle();
         }
 
         private void StartNextCycle()
         {
             hitFeedbackTime = 0f;
-            currentCycleSeconds = pendingBatches.Peek();
+            currentCycleSeconds = pendingBatches.Dequeue();
             readyAt = Time.time + currentCycleSeconds;
         }
 
@@ -170,19 +171,21 @@ namespace ToxicDepths
                 {
                     ShakeModel(remaining);
                 }
-                else if (emeraldsToEject + stonesToEject == 0)
+                else
                 {
                     RestoreModel();
+                    currentCycleSeconds = 0f;
                     emeraldsToEject = Random.Range(1, 3);
                     stonesToEject = Random.Range(1, 4);
-                    pendingBatches.Dequeue();
-                    if (IsProcessing) StartNextCycle();
                 }
             }
             else UpdateHitFeedback(Time.deltaTime);
 
-            if (emeraldsToEject + stonesToEject > 0 && Time.time >= nextEjectionAt)
+            if (HasOutput && Time.time >= nextEjectionAt)
+            {
                 EjectNextPiece();
+                if (!HasOutput && pendingBatches.Count > 0) StartNextCycle();
+            }
         }
 
         private void UpdateHitFeedback(float deltaTime)

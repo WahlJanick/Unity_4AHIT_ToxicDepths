@@ -12,6 +12,10 @@ namespace ToxicDepths.Mining
         [SerializeField, Min(1)] private int hitsToBreak = 4;
         [SerializeField] private UnityEvent onDepleted = new UnityEvent();
 
+        [Header("Giftwolke")]
+        [SerializeField] private ParticleSystem poisonSmoke;
+        [SerializeField] private Material poisonSmokeMaterial;
+
         [Header("Verarbeitung")]
         [Tooltip("Dauer pro Erzstueck im Standard-Shredder. Schnellere Modelle reduzieren diese Zeit.")]
         [SerializeField, Min(0.1f)] private float shredderSeconds = 6f;
@@ -30,6 +34,13 @@ namespace ToxicDepths.Mining
         public float ShredderSeconds => Mathf.Max(0.1f, shredderSeconds);
         public int RemainingHits => Mathf.Max(0, hitsToBreak - hitsTaken);
         public bool IsDepleted => RemainingHits == 0;
+        internal bool ReleasesPoison => poisonSmoke != null;
+        internal bool WasScanned { get; private set; }
+        internal void MarkScanned() => WasScanned = true;
+        internal string ScanName => oreName switch { "Smaragd" => "Emerald", "Rubin" => "Ruby", _ => oreName };
+        internal static event UnityAction<OreDeposit> Available;
+
+        private void OnEnable() => Available?.Invoke(this);
 
         internal bool TryGetHeldMeshPose(Vector3 meshPosition, out Pose pose)
         {
@@ -59,6 +70,11 @@ namespace ToxicDepths.Mining
 
             transform.localRotation = restRotation;
             OreChunk.Spawn(this);
+            if (poisonSmoke != null)
+            {
+                Vector3 center = TryGetComponent(out Collider oreCollider) ? oreCollider.bounds.center : transform.position;
+                PoisonCloud.Spawn(poisonSmoke, poisonSmokeMaterial, center + Vector3.up * 0.55f, gameObject.scene);
+            }
             gameObject.SetActive(false);
             onDepleted.Invoke();
             return true;

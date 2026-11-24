@@ -9,7 +9,7 @@ namespace ToxicDepths.UI
     [DisallowMultipleComponent]
     public sealed class HotbarController : MonoBehaviour
     {
-        public const int SlotCount = 6;
+        public const int SlotCount = 7;
 
         [Serializable]
         public sealed class Slot
@@ -19,7 +19,7 @@ namespace ToxicDepths.UI
         }
 
         [Header("Hotbar-Slots")]
-        [SerializeField] private Slot[] slots = { new Slot(), new Slot(), new Slot(), new Slot(), new Slot(), new Slot() };
+        [SerializeField] private Slot[] slots = new Slot[SlotCount];
         [SerializeField, Range(0, SlotCount - 1)] private int selectedIndex;
         [Header("Anzeige")]
         [SerializeField] private HotbarSlotUI[] slotViews = new HotbarSlotUI[SlotCount];
@@ -52,6 +52,7 @@ namespace ToxicDepths.UI
                 if (keyboard.digit4Key.wasPressedThisFrame) { SelectSlot(3); return; }
                 if (keyboard.digit5Key.wasPressedThisFrame) { SelectSlot(4); return; }
                 if (keyboard.digit6Key.wasPressedThisFrame) { SelectSlot(5); return; }
+                if (keyboard.digit7Key.wasPressedThisFrame) { SelectSlot(6); return; }
             }
             Mouse mouse = Mouse.current;
             if (mouse == null) return;

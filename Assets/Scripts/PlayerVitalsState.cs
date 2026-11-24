@@ -10,6 +10,7 @@ namespace ToxicDepths
         public float Stamina { get; private set; }
         public float Energy { get; private set; }
         public bool IsExhausted { get; private set; }
+        public bool IsPoisoned => poisonTimeRemaining > 0f;
         public float MaxStamina => BaseMaxStamina *
             (minimumStaminaFraction + (1f - minimumStaminaFraction) * Energy / MaxEnergy);
 
@@ -20,6 +21,7 @@ namespace ToxicDepths
         private readonly float energyPerStamina;
         private readonly float sprintRecoveryFraction;
         private float regenerationWait;
+        private float poisonTimeRemaining;
 
         public PlayerVitalsState(float maxStamina = 100f, float maxEnergy = 100f,
             float minimumStaminaFraction = 0.7f, float sprintDrain = 20f,
@@ -76,11 +78,30 @@ namespace ToxicDepths
             if (consumed <= 0f) return 0f;
 
             Stamina -= consumed;
-            Energy = Math.Max(0f, Energy - consumed * energyPerStamina);
-            Stamina = Math.Min(Stamina, MaxStamina);
+            DrainEnergy(consumed * energyPerStamina);
             regenerationWait = regenerationDelay;
             if (Stamina <= 0f) IsExhausted = true;
             return consumed;
+        }
+
+        public void RefreshPoison(float duration)
+        {
+            poisonTimeRemaining = Math.Max(poisonTimeRemaining, duration);
+        }
+
+        public void TickPoison(float deltaTime, float energyPerSecond)
+        {
+            if (!IsPoisoned || deltaTime <= 0f) return;
+
+            float poisonedTime = Math.Min(poisonTimeRemaining, deltaTime);
+            poisonTimeRemaining -= poisonedTime;
+            DrainEnergy(poisonedTime * energyPerSecond);
+        }
+
+        private void DrainEnergy(float amount)
+        {
+            Energy = Math.Max(0f, Energy - Math.Max(0f, amount));
+            Stamina = Math.Min(Stamina, MaxStamina);
         }
 
         public void RestoreEnergy(float amount)

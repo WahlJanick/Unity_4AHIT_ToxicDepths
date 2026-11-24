@@ -171,7 +171,7 @@ namespace ToxicDepths.Mining
         public bool TryStartSwing()
         {
             if (IsSwinging || !CanControlTool()) return false;
-            if (!vitals.TrySpendStamina(staminaPerSwing))
+            if (!vitals.TrySpendStamina(staminaPerSwing) || vitals.IsDefeated)
             {
                 retryAt = Time.time + 0.2f;
                 return false;
